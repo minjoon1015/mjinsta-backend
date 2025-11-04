@@ -1,0 +1,74 @@
+package back_end.springboot.entity;
+
+import back_end.springboot.common.Role;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "user")
+@Getter
+@Setter
+@NoArgsConstructor
+public class UserEntity {
+    @Id
+    private String id;
+    private String password;
+    private String name;
+    private String sex;
+    private String comment;
+    private String email;
+    private String address;
+    private String addressDetail;
+    private Integer followCount;
+    private Integer followerCount;
+    private Integer postCount;
+    private String profileImage;
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    public UserEntity(String id, String password, String name, String sex, String comment, String email, String address, String addressDetail, String profileImage) {
+        this.id = id;
+        this.password = password;
+        this.name = name;
+        this.sex = sex;
+        this.comment = comment;
+        this.email = email;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.profileImage = profileImage;
+        this.followCount = 0;
+        this.followerCount = 0;
+        this.postCount = 0;
+        this.role = Role.USER;
+    }
+    
+    public void plusFollow() {
+        this.followCount++;
+    }
+
+    public void plusFollower() {
+        this.followerCount++; 
+    }
+
+    public void minusFollow() {
+        this.followCount--;
+    }
+
+    public void minusFollower() {
+        this.followerCount--;
+    }
+
+    public void plusPost() {
+        this.postCount++;
+    }
+
+    public void updateProfileImage(String url) {
+        this.profileImage = url;
+    }
+}
