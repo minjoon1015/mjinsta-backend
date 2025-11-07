@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String>  {
     boolean existsByEmail(String email);
     UserEntity findByEmail(String email);
 
-    @Query(value = "select u.id, u.name, u.profile_image\n" + //
+    @Query(value = "select u.id, u.name, u.profile_image as profileImage\n" + //
                 "from follows as f join user u \n" + //
                 "on f.following_id = u.id\n" + //
                 "where follower_id = :id and following_id like concat('%', :keyword, '%') limit 10;", nativeQuery = true)
@@ -29,7 +29,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String>  {
                 "where id like concat('%', :keyword, '%');", nativeQuery = true)
     List<SimpleUserProjection> findAllByIdLimit(@Param("keyword") String keyword, @Param("keyword") int limit);
 
-    @Query(value = "select u.id, u.name, u.profile_image, u.comment, u.follow_count, u.follower_count, u.post_count, " +
+    @Query(value = "select u.id, u.name, u.profile_image as profileImage, u.comment, u.follow_count, u.follower_count, u.post_count, " +
                "case when f.follower_id = :userId and f.following_id = :searchId then true else false end as isFollowed " +
                "from user as u " +
                "left join follows as f on u.id = f.following_id and f.follower_id = :userId " +

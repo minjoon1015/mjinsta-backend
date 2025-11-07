@@ -215,6 +215,8 @@ public class UserServiceImplement implements UserService {
             if (user == null) {
                 return ResponseDto.badRequest();
             }
+            System.out.println(user.getId());
+            System.out.println(user.getProfileImage());
             return GetUserDetailsInfoResponseDto.success(new UserDetailsDto(user.getId(), user.getName(),
                     user.getProfileImage(), user.getComment(), user.getFollowCount(), user.getFollowerCount(),
                     user.getPostCount(), user.getIsFollowed() == 1 ? true : false));

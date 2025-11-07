@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.4'
+    id 'org.springframework.boot' version '3.3.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -24,20 +24,27 @@ repositories {
 }
 
 dependencies {
-    implementation platform('software.amazon.awssdk:bom:2.26.1')
+    implementation platform('software.amazon.awssdk:bom:2.25.0')
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0')
+    implementation platform('io.projectreactor:reactor-bom:2024.0.4')
+    
+    implementation 'io.projectreactor.netty:reactor-netty-core'
+    implementation 'io.projectreactor.netty:reactor-netty-http'
+
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'software.amazon.awssdk:s3'
-    implementation(platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0'))
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store'
 
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.hibernate.validator:hibernate-validator'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
-
+    
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 

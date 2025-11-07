@@ -74,7 +74,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatServiceImplement implements ChatService {
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final SimpMessagingTemplate simpMessagingTemplate; 
     private final FileManager fileManager;
 
     private final ChatRoomRepository chatRoomRepository;
@@ -83,8 +83,6 @@ public class ChatServiceImplement implements ChatService {
     private final ChatRoomMessageRepository chatRoomMessageRepository;
     private final MessageAttachmentRepository messageAttachmentRepository;
     private final UserRepository userRepository;
-
-    // 그룹 채팅방의 경우 참여 인원들의 is_hidden 필드가 true가 되면 채팅방 삭제
 
     @Override
     @Transactional
@@ -172,8 +170,7 @@ public class ChatServiceImplement implements ChatService {
             List<ChatRoomProjection> saved = chatRoomRepository.findByUserId(id);
             List<ChatRoomDto> list = saved.stream().map((c) -> {
                 try {
-                    List<String> names = objectMapper.readValue(c.getTitle(), new TypeReference<List<String>>() {
-                    });
+                    List<String> names = objectMapper.readValue(c.getTitle(), new TypeReference<List<String>>() {});
                     int length = names.size();
                     String title;
                     if (length == 1) {
@@ -206,7 +203,7 @@ public class ChatServiceImplement implements ChatService {
             return;
         chatRoomLastReadEntity.setLastReadMessageId(messageId);
         chatRoomLastReadRepository.save(chatRoomLastReadEntity);
-        simpMessagingTemplate.convertAndSend("/topic/members/info/" + chatRoomId,
+        simpMessagingTemplate.convertAndSend("/topic/members.info." + chatRoomId,
                 new ChatMembersReadInfoDto(chatRoomId, id, messageId));
     }
 
@@ -393,7 +390,7 @@ public class ChatServiceImplement implements ChatService {
             chatRoomRepository.save(savedChatRoom);
             ChatRoomMessageEntity messageEntity = chatRoomMessageRepository.save(chatRoomMessageEntity);
             requestDto.setMessageId(messageEntity.getId());
-            String topic = "/topic/chat/" + requestDto.getChatRoomId();
+            String topic = "/topic/chat." + requestDto.getChatRoomId();
             simpMessagingTemplate.convertAndSend(topic, requestDto);
         } catch (Exception e) {
             e.printStackTrace();
@@ -494,7 +491,7 @@ public class ChatServiceImplement implements ChatService {
             savedChatRoom.updateLastMessage(message, chatMessageDto.getCreateAt());
             chatRoomRepository.save(savedChatRoom);
 
-            String topic = "/topic/chat/" + chatMessageDto.getChatRoomId();
+            String topic = "/topic/chat." + chatMessageDto.getChatRoomId();
             simpMessagingTemplate.convertAndSend(topic, chatMessageDto);
         } catch (Exception e) {
             e.printStackTrace();
@@ -719,7 +716,7 @@ public class ChatServiceImplement implements ChatService {
             sb.append("을 초대하였습니다.");
             ChatRoomMessageEntity message = new ChatRoomMessageEntity(requestDto.getChatRoomId(), id, sb.toString(), LocalDateTime.now(), MessageType.INVITE);
             ChatRoomMessageEntity savedMessage = chatRoomMessageRepository.save(message);
-            String topic = "/topic/chat/" + requestDto.getChatRoomId();
+            String topic = "/topic/chat." + requestDto.getChatRoomId();
                     // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
                     simpMessagingTemplate.convertAndSend(topic,
                             new ChatMessageDto(MessageType.INVITE, savedMessage.getChatroomId(), savedMessage.getId(),
@@ -817,7 +814,7 @@ public class ChatServiceImplement implements ChatService {
                             MessageType.LEAVE);
                     ChatRoomMessageEntity messageEntity = chatRoomMessageRepository.save(message);
 
-                    String topic = "/topic/chat/" + chatRoomId;
+                    String topic = "/topic/chat." + chatRoomId;
                     // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
                     simpMessagingTemplate.convertAndSend(topic,
                             new ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
