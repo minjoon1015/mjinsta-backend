@@ -1,24 +1,34 @@
-services:
-  mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: instagram
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
+version: '3.8'
 
-  app:
-    image: my-springboot-app
-    depends_on:
-      - mysql
+services:
+  spring1:
+    image: spring
+    container_name: mjinsta_spring_server_1
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/instagram
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      AWS_ACCESS_KEY_ID: AKIAX3JRQ6WG4ER32DAS
+      AWS_SECRET_ACCESS_KEY: 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
+      db.mysql.url: jdbc:mysql://mysql:3306/instagram?useUnicode=true&character_set_server=utf8mb4&serverTimezone=Asia/Seoul
+      db.mysql.username: root
+      db.mysql.password: root
+    networks:
+      - mjinsta-network 
 
-volumes:
-  mysql-data:
+  spring2:
+    image: spring
+    container_name: mjinsta_spring_server_2
+    ports:
+      - "8081:8080"
+    environment:
+      AWS_ACCESS_KEY_ID: AKIAX3JRQ6WG4ER32DAS
+      AWS_SECRET_ACCESS_KEY: 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
+      db.mysql.url: jdbc:mysql://mysql:3306/instagram?useUnicode=true&character_set_server=utf8mb4&serverTimezone=Asia/Seoul
+      db.mysql.username: root
+      db.mysql.password: root
+    networks:
+      - mjinsta-network 
+
+networks:
+  mjinsta-network:
+    external: true
