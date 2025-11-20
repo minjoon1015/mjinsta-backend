@@ -40,7 +40,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     .setSystemHeartbeatSendInterval(10000) // 10초
                     .setSystemHeartbeatReceiveInterval(10000)
                     .setVirtualHost(virtualHost);
-          registry.setApplicationDestinationPrefixes("/app");          registry.setUserDestinationPrefix("/user");
+          registry.setApplicationDestinationPrefixes("/app");          
+          registry.setUserDestinationPrefix("/user");
      }    
 
      @Override

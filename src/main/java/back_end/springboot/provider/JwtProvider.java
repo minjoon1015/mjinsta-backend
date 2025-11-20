@@ -16,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JwtProvider {
-    // instagram.auth.jwt.secret.key
-
     @Value("${auth.jwt.secret.key}")
     private String securityKey;
 

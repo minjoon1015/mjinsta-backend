@@ -27,10 +27,10 @@ public class AlarmEntity {
     String userId;
     @Enumerated(EnumType.STRING)
     AlarmType alarmType;
-    Integer referenceId;
+    String referenceId;
     LocalDateTime create_at;
 
-    public AlarmEntity(String userId, AlarmType alarmType, Integer referenceId) {
+    public AlarmEntity(String userId, AlarmType alarmType, String referenceId) {
         this.userId = userId;
         this.alarmType = alarmType;
         this.referenceId = referenceId;

@@ -1,0 +1,12 @@
+package back_end.springboot.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import back_end.springboot.entity.PostAttachmentsUserTagsEntity;
+import back_end.springboot.entity.Primary.PostAttachmentsUserTagId;
+
+@Repository
+public interface PostAttachmentsUserTagRepository extends JpaRepository<PostAttachmentsUserTagsEntity, PostAttachmentsUserTagId> {
+    
+}

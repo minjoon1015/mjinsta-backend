@@ -36,7 +36,7 @@ public class AlarmServiceImplement implements AlarmService {
             if (!list.isEmpty()) {
                 for (AlarmEntity l : list) {
                     if (l.getAlarmType() == AlarmType.FOLLOW) {
-                        FollowsEntity followsEntity = followsRepository.findById(l.getReferenceId()).orElse(null);
+                        FollowsEntity followsEntity = followsRepository.findById(Integer.parseInt(l.getReferenceId())).orElse(null);
                         UserEntity getUser = userRepository.findById(followsEntity.getFollowerId()).orElse(null);
                         FollowAlarmDto followAlarmDto = new FollowAlarmDto(AlarmType.FOLLOW, l.getCreate_at(),
                                 getUser.getId(), getUser.getProfileImage());

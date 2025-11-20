@@ -27,7 +27,7 @@ public class FileValidateManager {
         return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
 
-    private static String detectFileType(MultipartFile file) throws IOException {
+    public static String detectFileType(MultipartFile file) throws IOException {
         try (InputStream is = file.getInputStream()) {
             byte[] header = new byte[8];
             is.read(header);
@@ -43,9 +43,9 @@ public class FileValidateManager {
             else if (hex.startsWith("25504446"))
                 return "pdf";
             else if (hex.startsWith("D0CF11E0A1B11AE1"))
-                return "hwp"; // HWP OLE
+                return "hwp"; 
             else if (hex.startsWith("504B0304"))
-                return "hwp"; // HWPX (ZIP 기반)
+                return "hwp"; 
             
             return null;
         }

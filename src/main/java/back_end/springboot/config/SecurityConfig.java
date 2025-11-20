@@ -3,6 +3,7 @@ package back_end.springboot.config;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,6 +32,8 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    @Value("${cors.front-end.url}")
+    private String frontEndUrl;
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -70,9 +73,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        String frontEndUrl = "http://localhost:3000";
-        String proxyUrl = "http://localhost:3001";
-        config.setAllowedOrigins(List.of(frontEndUrl, proxyUrl));
+        config.setAllowedOrigins(List.of(frontEndUrl));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

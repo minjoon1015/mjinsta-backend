@@ -95,8 +95,10 @@ public class UserServiceImplement implements UserService {
     public ResponseEntity<? super FollowResponseDto> follow(FollowRequestDto requestDto, String id) {
         try {
             String followingId = requestDto.getFollowingId();
-            UserEntity followingEntity = userRepository.findById(followingId).orElse(null);
-            UserEntity followerEntity = userRepository.findById(id).orElse(null);
+            UserEntity followingEntity = userRepository.findByIdWithLock(followingId).orElse(null);
+            UserEntity followerEntity = userRepository.findByIdWithLock(id).orElse(null);
+            // UserEntity followingEntity = userRepository.findById(followingId).orElse(null);
+            // UserEntity followerEntity = userRepository.findById(id).orElse(null);
             if (followingEntity == null || followerEntity == null)
                 return ResponseDto.badRequest();
             Optional<FollowsEntity> FindFollowsEntity = followsRepository.findByFollowerIdAndFollowingId(id,
@@ -126,7 +128,7 @@ public class UserServiceImplement implements UserService {
                 ops.set(key, updateList);
             }
 
-            AlarmEntity alarmEntity = new AlarmEntity(followingEntity.getId(), AlarmType.FOLLOW, saveEntity.getId());
+            AlarmEntity alarmEntity = new AlarmEntity(followingEntity.getId(), AlarmType.FOLLOW, Integer.toString(saveEntity.getId()));
             alarmRepository.save(alarmEntity);
 
             FollowAlarmDto followAlarmDto = new FollowAlarmDto(AlarmType.FOLLOW, LocalDateTime.now(),
@@ -155,6 +157,9 @@ public class UserServiceImplement implements UserService {
             if (saved.size() > 0) {
                 for (ChatRoomParticipantEntity c : saved) {
                     redisTemplate.delete("chatRoom:members:" + Integer.toString(c.getId().getChatroomId()));
+                }
+                for (ChatRoomParticipantEntity c : saved) {
+                    redisTemplate.delete("chatRoom:members:total" + Integer.toString(c.getId().getChatroomId()));
                 }
             }
             return UpdateProfileUrlResponseDto.success(userEntity.getProfileImage());
@@ -234,8 +239,8 @@ public class UserServiceImplement implements UserService {
                     .orElse(null);
             if (saved == null)
                 return ResponseDto.badRequest();
-            UserEntity user = userRepository.findById(saved.getFollowerId()).orElse(null);
-            UserEntity unFollowingUser = userRepository.findById(saved.getFollowingId()).orElse(null);
+            UserEntity user = userRepository.findByIdWithLock(saved.getFollowerId()).orElse(null);
+            UserEntity unFollowingUser = userRepository.findByIdWithLock(saved.getFollowingId()).orElse(null);
             user.minusFollow();
             unFollowingUser.minusFollower();
             List<UserEntity> list = new ArrayList<>();
