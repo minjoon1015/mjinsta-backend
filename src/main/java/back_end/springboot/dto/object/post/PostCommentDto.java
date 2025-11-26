@@ -10,6 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class PostCommentDto {
+    private Integer id;
     private Integer postId;
     private String userId;
     private String name;

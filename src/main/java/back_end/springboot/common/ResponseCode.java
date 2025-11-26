@@ -11,5 +11,6 @@ public enum ResponseCode {
     ABS,
     NV, // Not Verify
     IVT, // Invaild Token
-    NCT // Not Compatible Type
+    NCT, // Not Compatible Type
+    NEW_SIGN // New Oauth SignIn
 }

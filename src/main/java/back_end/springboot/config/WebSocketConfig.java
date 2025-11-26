@@ -37,8 +37,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     .setClientPasscode(password)
                     .setSystemLogin(username)
                     .setSystemPasscode(password)
-                    .setSystemHeartbeatSendInterval(10000) // 10초
-                    .setSystemHeartbeatReceiveInterval(10000)
+                    .setSystemHeartbeatSendInterval(25000) 
+                    .setSystemHeartbeatReceiveInterval(25000)
                     .setVirtualHost(virtualHost);
           registry.setApplicationDestinationPrefixes("/app");          
           registry.setUserDestinationPrefix("/user");
@@ -48,7 +48,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      public void registerStompEndpoints(StompEndpointRegistry registry) {
           registry.addEndpoint("/ws")
                     .setAllowedOriginPatterns("*")
-                    .withSockJS();
+                    .withSockJS()
+                    .setHeartbeatTime(25000);
      }
 
      @Override

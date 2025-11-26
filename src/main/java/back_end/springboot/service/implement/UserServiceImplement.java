@@ -3,16 +3,15 @@ package back_end.springboot.service.implement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import back_end.springboot.common.AlarmType;
-import back_end.springboot.dto.object.alarm.alarm.FollowAlarmDto;
+import back_end.springboot.dto.object.alarm.extend.FollowAlarmDto;
+import back_end.springboot.dto.object.event.NotificationEvent;
 import back_end.springboot.dto.object.user.EditUserDto;
 import back_end.springboot.dto.object.user.SimpleUserDto;
 import back_end.springboot.dto.object.user.UserDetailsDto;
@@ -49,7 +49,6 @@ import back_end.springboot.entity.FollowsEntity;
 import back_end.springboot.entity.UserEntity;
 import back_end.springboot.repository.AlarmRepository;
 import back_end.springboot.repository.ChatRoomParticipantRepository;
-import back_end.springboot.repository.ChatRoomRepository;
 import back_end.springboot.repository.FollowsRepository;
 import back_end.springboot.repository.UserRepository;
 import back_end.springboot.repository.projection.SimpleUserProjection;
@@ -66,7 +65,7 @@ public class UserServiceImplement implements UserService {
     private final AlarmRepository alarmRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final PasswordEncoder passwordEncoder;
@@ -82,7 +81,7 @@ public class UserServiceImplement implements UserService {
             UserEntity userEntity = userRepository.findById(id).orElse(null);
             UserDto user = new UserDto(userEntity.getId(), userEntity.getName(), userEntity.getComment(),
                     userEntity.getFollowCount(), userEntity.getFollowerCount(), userEntity.getPostCount(),
-                    userEntity.getProfileImage());
+                    userEntity.getProfileImage(), userEntity.getType());
             return UserMeResponseDto.success(user);
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,8 +96,6 @@ public class UserServiceImplement implements UserService {
             String followingId = requestDto.getFollowingId();
             UserEntity followingEntity = userRepository.findByIdWithLock(followingId).orElse(null);
             UserEntity followerEntity = userRepository.findByIdWithLock(id).orElse(null);
-            // UserEntity followingEntity = userRepository.findById(followingId).orElse(null);
-            // UserEntity followerEntity = userRepository.findById(id).orElse(null);
             if (followingEntity == null || followerEntity == null)
                 return ResponseDto.badRequest();
             Optional<FollowsEntity> FindFollowsEntity = followsRepository.findByFollowerIdAndFollowingId(id,
@@ -133,7 +130,8 @@ public class UserServiceImplement implements UserService {
 
             FollowAlarmDto followAlarmDto = new FollowAlarmDto(AlarmType.FOLLOW, LocalDateTime.now(),
                     followerEntity.getId(), followerEntity.getProfileImage());
-            simpMessagingTemplate.convertAndSendToUser(followingEntity.getId(), "/queue/notify", followAlarmDto);
+            //simpMessagingTemplate.convertAndSendToUser(followingEntity.getId(), "/queue/notify", followAlarmDto);
+            eventPublisher.publishEvent(new NotificationEvent(followingEntity.getId(), "/queue/notify", followAlarmDto));
             return FollowResponseDto.success();
 
         } catch (Exception e) {
@@ -248,7 +246,7 @@ public class UserServiceImplement implements UserService {
             list.add(unFollowingUser);
             userRepository.saveAll(list);
             followsRepository.delete(saved);
-            AlarmEntity entity = alarmRepository.findByUserIdAndReferenceId(unFollowingUser.getId(), Integer.toString(saved.getId()));
+            AlarmEntity entity = alarmRepository.findByUserIdAndReferenceId(unFollowingUser.getId(), Integer.toString(saved.getId()), AlarmType.FOLLOW);
             alarmRepository.delete(entity);
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
             String key = "recommend:" + id;

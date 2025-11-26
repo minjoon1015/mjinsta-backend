@@ -1,6 +1,7 @@
 package back_end.springboot.entity;
 
 import back_end.springboot.common.Role;
+import back_end.springboot.common.UserType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,9 +31,12 @@ public class UserEntity {
     private Integer postCount;
     private String profileImage;
     @Enumerated(EnumType.STRING)
+    private UserType type;
+    @Enumerated(EnumType.STRING)
     private Role role;
+    private String socialId;
 
-    public UserEntity(String id, String password, String name, String sex, String comment, String email, String address, String addressDetail, String profileImage) {
+    public UserEntity(String id, String password, String name, String sex, String comment, String email, String address, String addressDetail, String profileImage, UserType type, String socialId) {
         this.id = id;
         this.password = password;
         this.name = name;
@@ -46,6 +50,8 @@ public class UserEntity {
         this.followerCount = 0;
         this.postCount = 0;
         this.role = Role.USER;
+        this.type = type;
+        this.socialId = socialId;
     }
     
     public void plusFollow() {

@@ -1,4 +1,4 @@
-package back_end.springboot.dto.object.alarm.alarm;
+package back_end.springboot.dto.object.alarm.extend;
 
 import java.time.LocalDateTime;
 

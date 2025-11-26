@@ -22,7 +22,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
 
     UserEntity findByEmail(String email);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(value = "SELECT * FROM user WHERE id = :id FOR UPDATE", nativeQuery = true)
     Optional<UserEntity> findByIdWithLock(String id);
 
     @Query(value = "select u.id, u.name, u.profile_image as profileImage\n" + //

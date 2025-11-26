@@ -27,14 +27,17 @@ public class SignInResponseDto extends ResponseDto {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    public static ResponseEntity<SignInResponseDto> notExsitedId() {
+    public static ResponseEntity<SignInResponseDto> notExistedId() {
         SignInResponseDto responseDto = new SignInResponseDto(ResponseCode.NEI);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDto);
     }
 
-    public static ResponseEntity<SignInResponseDto> notExsitedPassword() {
+    public static ResponseEntity<SignInResponseDto> notExistedPassword() {
         SignInResponseDto responseDto = new SignInResponseDto(ResponseCode.NEP);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDto);
     }
 
+    public static ResponseEntity<SignInResponseDto> newOauthSignIn(String id) {
+        return ResponseEntity.status(HttpStatus.OK).body(new SignInResponseDto(ResponseCode.NEW_SIGN, id));
+    }
 }

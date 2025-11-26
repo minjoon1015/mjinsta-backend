@@ -21,9 +21,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import back_end.springboot.dto.request.auth.DuplicateCheckIdRequestDto;
+import back_end.springboot.dto.request.auth.OauthSignUpRequestDto;
 import back_end.springboot.dto.request.auth.SignInRequestDto;
 import back_end.springboot.dto.request.auth.SignUpRequestDto;
 import back_end.springboot.dto.response.auth.DuplicateCheckIdResponseDto;
+import back_end.springboot.dto.response.auth.OauthSignUpResponseDto;
 import back_end.springboot.dto.response.auth.SignInResponseDto;
 import back_end.springboot.dto.response.auth.SignUpResponseDto;
 import back_end.springboot.service.AuthCodeService;
@@ -42,13 +44,14 @@ public class AuthController {
     @Value("${google-oauth-client-secret}")
     private String clientSecret;
 
-    private String redirectUrl = "http://localhost:3000/oauth/google";
-
+    @Value("${cors.front-end.url}")
+    private String frontEndUrl;
     private final RestTemplate resetTemplate = new RestTemplate();
 
     // oauth
     @GetMapping("/google/login-url")
     public ResponseEntity<String> getGoogleLoginUrl() {
+        String redirectUrl = frontEndUrl+"/oauth/google";
         String loginUrl = UriComponentsBuilder.fromHttpUrl("https://accounts.google.com/o/oauth2/v2/auth")
                             .queryParam("client_id", clientId)
                             .queryParam("redirect_uri", redirectUrl)
@@ -63,7 +66,7 @@ public class AuthController {
 
     @GetMapping("/google/callback")
     public ResponseEntity<? super SignInResponseDto> googleCallback(@RequestParam("code") String code) {
-        System.out.println(code);
+        String redirectUrl = frontEndUrl+"/oauth/google";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -111,5 +114,10 @@ public class AuthController {
     @GetMapping("/send/email")
     public void sendEmail(@RequestParam("receive_email") String email) {
         userService.sendMail(email);
+    }
+
+    @PostMapping("/oauth-signUp")
+    public ResponseEntity<? super OauthSignUpResponseDto> oauthSignUn(@RequestBody OauthSignUpRequestDto requestDto) {
+        return userService.oauthSignUp(requestDto);
     }
 }

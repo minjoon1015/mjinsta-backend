@@ -31,7 +31,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 if (jwtProvider.validateToken(token)) {
                     String userId = jwtProvider.getUserIdFromToken(token);
                     UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
                     accessor.setUser(auth);
                 }
             }

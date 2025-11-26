@@ -57,10 +57,6 @@ public class PostEntity {
     @BatchSize(size = 100)
     private List<PostAttachmentsEntity> attachments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 100)
-    private List<PostFavoriteEntity> favorites = new ArrayList<>();
-
     public PostEntity(String userId, String comment, String location, Integer favoriteCount, Integer commentCount, LocalDateTime createAt, String profileImage) {
         this.userId = userId;
         this.comment = comment;

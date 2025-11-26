@@ -1,4 +1,4 @@
-package back_end.springboot.dto.object.alarm.alarm;
+package back_end.springboot.dto.object.alarm.extend;
 
 import java.time.LocalDateTime;
 
@@ -12,9 +12,11 @@ import lombok.Setter;
 @Setter
 public class PostLikeAlarmDto extends AlarmDto {
     private SimpleUserDto user;
+    private Integer postId;
 
-    public PostLikeAlarmDto(AlarmType alarmType, LocalDateTime create_at, SimpleUserDto user) {
+    public PostLikeAlarmDto(AlarmType alarmType, LocalDateTime create_at, Integer postId, SimpleUserDto user) {
         super(alarmType, create_at);
+        this.postId = postId;
         this.user = user;
     }
     
