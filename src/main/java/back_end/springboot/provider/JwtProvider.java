@@ -7,6 +7,7 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import back_end.springboot.common.Role;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -27,9 +28,10 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(securityKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String userId) {
+    public String generateToken(String userId, Role role) {
         return Jwts.builder()
                 .setSubject(userId)
+                .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiredTime))
                 .signWith(key)
@@ -45,6 +47,15 @@ public class JwtProvider {
                 .getSubject();
     }
 
+    public String getRoleFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
+    }
+    
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -56,5 +67,6 @@ public class JwtProvider {
             return false;
         }
     }
+
 
 }

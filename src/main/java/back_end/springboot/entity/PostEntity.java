@@ -12,6 +12,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,11 @@ public class PostEntity {
     private Integer commentCount;
     private LocalDateTime createAt;
     private String profileImage;
+    // private String extractedKeywords;
+    // private String imageAiTags;
+    // @Lob
+    // private byte[] topic_vector;
+
 
     public void increaseLike() {
         this.favoriteCount++;

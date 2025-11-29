@@ -13,7 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.ResponseEntity; 
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +78,7 @@ public class ChatServiceImplement implements ChatService {
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
-    // private final SimpMessagingTemplate simpMessagingTemplate; 
+    // private final SimpMessagingTemplate simpMessagingTemplate;
     private final FileManager fileManager;
 
     private final ChatRoomRepository chatRoomRepository;
@@ -135,7 +135,8 @@ public class ChatServiceImplement implements ChatService {
 
             AlarmDto alarmDto = new AlarmDto(AlarmType.CREATE_ROOM, now);
             for (String userId : users) {
-                // simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notify", alarmDto);
+                // simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notify",
+                // alarmDto);
                 eventPublisher.publishEvent(new NotificationEvent(userId, "/queue/notify", alarmDto));
             }
             return ChatRoomCreateResponseDto.success();
@@ -176,7 +177,8 @@ public class ChatServiceImplement implements ChatService {
             List<ChatRoomProjection> saved = chatRoomRepository.findByUserId(id);
             List<ChatRoomDto> list = saved.stream().map((c) -> {
                 try {
-                    List<String> names = objectMapper.readValue(c.getTitle(), new TypeReference<List<String>>() {});
+                    List<String> names = objectMapper.readValue(c.getTitle(), new TypeReference<List<String>>() {
+                    });
                     int length = names.size();
                     String title;
                     if (length == 1) {
@@ -199,19 +201,27 @@ public class ChatServiceImplement implements ChatService {
     }
 
     @Override
+    @Transactional
     public void updateRead(String id, Integer chatRoomId, Integer messageId) {
-        ChatRoomLastReadParticipantId chatRoomLastReadParticipantId = new ChatRoomLastReadParticipantId(chatRoomId, id);
-        ChatRoomLastReadEntity chatRoomLastReadEntity = chatRoomLastReadRepository
-                .findById(chatRoomLastReadParticipantId).orElse(null);
-        if (chatRoomLastReadEntity == null)
-            return;
-        if (chatRoomLastReadEntity.getLastReadMessageId() == messageId)
-            return;
-        chatRoomLastReadEntity.setLastReadMessageId(messageId);
-        chatRoomLastReadRepository.save(chatRoomLastReadEntity);
-        // simpMessagingTemplate.convertAndSend("/topic/members.info." + chatRoomId,
-        //         new ChatMembersReadInfoDto(chatRoomId, id, messageId));
-        eventPublisher.publishEvent(new TopicEvent("/topic/members.info." + chatRoomId, new ChatMembersReadInfoDto(chatRoomId, id, messageId)));
+        try {
+            ChatRoomLastReadParticipantId chatRoomLastReadParticipantId = new ChatRoomLastReadParticipantId(chatRoomId,
+                    id);
+            ChatRoomLastReadEntity chatRoomLastReadEntity = chatRoomLastReadRepository
+                    .findById(chatRoomLastReadParticipantId).orElse(null);
+            if (chatRoomLastReadEntity == null)
+                return;
+            if (chatRoomLastReadEntity.getLastReadMessageId() == messageId)
+                return;
+            chatRoomLastReadEntity.setLastReadMessageId(messageId);
+            chatRoomLastReadRepository.save(chatRoomLastReadEntity);
+            // simpMessagingTemplate.convertAndSend("/topic/members.info." + chatRoomId,
+            // new ChatMembersReadInfoDto(chatRoomId, id, messageId));
+            eventPublisher.publishEvent(new TopicEvent("/topic/members.info." + chatRoomId,
+                    new ChatMembersReadInfoDto(chatRoomId, id, messageId)));
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
     }
 
     @Override
@@ -335,12 +345,13 @@ public class ChatServiceImplement implements ChatService {
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
             String key = "chatRoom:members:" + requestDto.getChatRoomId();
             Object saved = ops.get(key);
-            
+
             if (saved != null) {
                 list = objectMapper.convertValue(saved, new TypeReference<Set<SimpleUserDto>>() {
                 });
             } else {
-                Set<SimpleUserProjection> users = chatRoomRepository.findByJoinedChatRoomUsersForHistory(requestDto.getChatRoomId());
+                Set<SimpleUserProjection> users = chatRoomRepository
+                        .findByJoinedChatRoomUsersForHistory(requestDto.getChatRoomId());
                 list = users.stream()
                         .map((u) -> new SimpleUserDto(u.getId(), u.getName(), u.getProfileImage(), false))
                         .collect(Collectors.toSet());
@@ -350,7 +361,7 @@ public class ChatServiceImplement implements ChatService {
             Set<SimpleUserDto> userList = new HashSet<>();
             String key2 = "chatRoom:members:total:" + requestDto.getChatRoomId();
             Object saved2 = ops.get(key2);
-    
+
             if (saved2 != null) {
                 userList = objectMapper.convertValue(saved2, new TypeReference<Set<SimpleUserDto>>() {
                 });
@@ -380,18 +391,22 @@ public class ChatServiceImplement implements ChatService {
                         up.setIsHidden(false);
                         chatRoomParticipantRepository.save(up);
                         redisTemplate.delete(key);
-                        // simpMessagingTemplate.convertAndSendToUser(up.getId().getUserId(), "/queue/notify",
-                        //         new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now()));
-                        eventPublisher.publishEvent(new NotificationEvent(up.getId().getUserId(), "/queue/notify", new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now())));
+                        // simpMessagingTemplate.convertAndSendToUser(up.getId().getUserId(),
+                        // "/queue/notify",
+                        // new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now()));
+                        eventPublisher.publishEvent(new NotificationEvent(up.getId().getUserId(), "/queue/notify",
+                                new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now())));
                     }
                 }
             }
 
             for (SimpleUserDto u : userList) {
-                // simpMessagingTemplate.convertAndSendToUser(u.getId(), "/queue/notify", new ChatRoomPrevDto(
-                //         AlarmType.CHAT, LocalDateTime.now(), requestDto.getChatRoomId(), requestDto.getMessage()));
+                // simpMessagingTemplate.convertAndSendToUser(u.getId(), "/queue/notify", new
+                // ChatRoomPrevDto(
+                // AlarmType.CHAT, LocalDateTime.now(), requestDto.getChatRoomId(),
+                // requestDto.getMessage()));
                 eventPublisher.publishEvent(new NotificationEvent(u.getId(), "/queue/notify", new ChatRoomPrevDto(
-                         AlarmType.CHAT, LocalDateTime.now(), requestDto.getChatRoomId(), requestDto.getMessage())));
+                        AlarmType.CHAT, LocalDateTime.now(), requestDto.getChatRoomId(), requestDto.getMessage())));
             }
 
             ChatRoomMessageEntity chatRoomMessageEntity = new ChatRoomMessageEntity(requestDto.getChatRoomId(),
@@ -433,7 +448,7 @@ public class ChatServiceImplement implements ChatService {
             Set<SimpleUserDto> userList = new HashSet<>();
             String key2 = "chatRoom:members:total:" + chatRoomId;
             Object saved2 = ops.get(key2);
-    
+
             if (saved2 != null) {
                 userList = objectMapper.convertValue(saved2, new TypeReference<Set<SimpleUserDto>>() {
                 });
@@ -482,9 +497,11 @@ public class ChatServiceImplement implements ChatService {
                         up.setIsHidden(false);
                         chatRoomParticipantRepository.save(up);
                         redisTemplate.delete(key);
-                        // simpMessagingTemplate.convertAndSendToUser(up.getId().getUserId(), "/queue/notify",
-                        //         new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now()));
-                        eventPublisher.publishEvent(new NotificationEvent(up.getId().getUserId(), "/queue/notify", new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now())));
+                        // simpMessagingTemplate.convertAndSendToUser(up.getId().getUserId(),
+                        // "/queue/notify",
+                        // new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now()));
+                        eventPublisher.publishEvent(new NotificationEvent(up.getId().getUserId(), "/queue/notify",
+                                new AlarmDto(AlarmType.CREATE_ROOM, LocalDateTime.now())));
                     }
                 }
             }
@@ -495,10 +512,12 @@ public class ChatServiceImplement implements ChatService {
             String message = type == MessageType.IMAGE ? "사진 " + fileCount + "장을 보냈습니다."
                     : "파일 " + fileCount + "개를 보냈습니다.";
             for (SimpleUserDto u : userList) {
-                // simpMessagingTemplate.convertAndSendToUser(u.getId(), "/queue/notify", new ChatRoomPrevDto(
-                //         AlarmType.CHAT, LocalDateTime.now(), chatRoomMessageEntity.getChatroomId(), message));
+                // simpMessagingTemplate.convertAndSendToUser(u.getId(), "/queue/notify", new
+                // ChatRoomPrevDto(
+                // AlarmType.CHAT, LocalDateTime.now(), chatRoomMessageEntity.getChatroomId(),
+                // message));
                 eventPublisher.publishEvent(new NotificationEvent(u.getId(), "/queue/notify", new ChatRoomPrevDto(
-                         AlarmType.CHAT, LocalDateTime.now(), chatRoomMessageEntity.getChatroomId(), message)));
+                        AlarmType.CHAT, LocalDateTime.now(), chatRoomMessageEntity.getChatroomId(), message)));
             }
 
             savedChatRoom.updateLastMessage(message, chatMessageDto.getCreateAt());
@@ -718,32 +737,39 @@ public class ChatServiceImplement implements ChatService {
                     chatRoomLastReadRepository.save(chatRoomLastReadEntity);
                 }
                 UserEntity u = userRepository.findById(userId).orElse(null);
-                if (u == null) return ResponseDto.badRequest();
+                if (u == null)
+                    return ResponseDto.badRequest();
                 if (index++ == 0) {
-                    sb.append(id + "님이 "+ u.getName() + "님");
-                }
-                else {
+                    sb.append(id + "님이 " + u.getName() + "님");
+                } else {
                     sb.append(", " + u.getName() + "님");
                 }
             }
-            
+
             sb.append("을 초대하였습니다.");
-            ChatRoomMessageEntity message = new ChatRoomMessageEntity(requestDto.getChatRoomId(), id, sb.toString(), LocalDateTime.now(), MessageType.INVITE);
+            ChatRoomMessageEntity message = new ChatRoomMessageEntity(requestDto.getChatRoomId(), id, sb.toString(),
+                    LocalDateTime.now(), MessageType.INVITE);
             ChatRoomMessageEntity savedMessage = chatRoomMessageRepository.save(message);
             String topic = "/topic/chat." + requestDto.getChatRoomId();
-                    // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
-                    // simpMessagingTemplate.convertAndSend(topic,
-                    //         new ChatMessageDto(MessageType.INVITE, savedMessage.getChatroomId(), savedMessage.getId(),
-                    //                 savedMessage.getSenderId(), senderDto.getName(), "", savedMessage.getMessage(), savedMessage.getCreateAt()));
-            eventPublisher.publishEvent(new TopicEvent(topic, new ChatMessageDto(MessageType.INVITE, savedMessage.getChatroomId(), savedMessage.getId(),
-                             savedMessage.getSenderId(), senderDto.getName(), "", savedMessage.getMessage(), savedMessage.getCreateAt())));
+            // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
+            // simpMessagingTemplate.convertAndSend(topic,
+            // new ChatMessageDto(MessageType.INVITE, savedMessage.getChatroomId(),
+            // savedMessage.getId(),
+            // savedMessage.getSenderId(), senderDto.getName(), "",
+            // savedMessage.getMessage(), savedMessage.getCreateAt()));
+            eventPublisher.publishEvent(new TopicEvent(topic,
+                    new ChatMessageDto(MessageType.INVITE, savedMessage.getChatroomId(), savedMessage.getId(),
+                            savedMessage.getSenderId(), senderDto.getName(), "", savedMessage.getMessage(),
+                            savedMessage.getCreateAt())));
             redisTemplate.delete(key);
             for (String userId : requestDto.getUsers()) {
                 // 유저에게 알림
-                // simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notify", new AlarmDto(AlarmType.INVITE_ROOM, LocalDateTime.now()));
-                eventPublisher.publishEvent(new NotificationEvent(userId, "/queue/notify", new AlarmDto(AlarmType.INVITE_ROOM, LocalDateTime.now())));
+                // simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notify", new
+                // AlarmDto(AlarmType.INVITE_ROOM, LocalDateTime.now()));
+                eventPublisher.publishEvent(new NotificationEvent(userId, "/queue/notify",
+                        new AlarmDto(AlarmType.INVITE_ROOM, LocalDateTime.now())));
             }
-            
+
             return ChatRoomInviteUserResponseDto.success();
         } catch (Exception e) {
             e.printStackTrace();
@@ -788,8 +814,9 @@ public class ChatServiceImplement implements ChatService {
                 cp.setIsHidden(true);
                 chatRoomParticipantRepository.save(cp);
                 // simpMessagingTemplate.convertAndSendToUser(id, "/queue/notify",
-                //         new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
-                eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify", new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
+                // new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
+                eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
+                        new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
                 redisTemplate.delete(key);
             } else {
                 // 그룹 채팅
@@ -820,25 +847,33 @@ public class ChatServiceImplement implements ChatService {
                     chatRoomRepository.delete(chatRoomEntity);
                     redisTemplate.delete(key);
                     // simpMessagingTemplate.convertAndSendToUser(id, "/queue/notify",
-                    //         new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
-                    eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify", new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
+                    // new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
+                    eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
+                            new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
                 } else {
                     // notify로 보내는게 아니라 채팅방에 속해있는 애들은 topic으로 보내줘야함
                     // simpMessagingTemplate.convertAndSendToUser(id, "/queue/notify",
-                    //         new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
-                    eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify", new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
+                    // new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
+                    eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
+                            new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
 
                     redisTemplate.delete(key);
-                    ChatRoomMessageEntity message = new ChatRoomMessageEntity(chatRoomId, id, senderDto.getName() + "님이 퇴장하셨습니다.", LocalDateTime.now(),
+                    ChatRoomMessageEntity message = new ChatRoomMessageEntity(chatRoomId, id,
+                            senderDto.getName() + "님이 퇴장하셨습니다.", LocalDateTime.now(),
                             MessageType.LEAVE);
                     ChatRoomMessageEntity messageEntity = chatRoomMessageRepository.save(message);
 
                     String topic = "/topic/chat." + chatRoomId;
                     // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
-                    // simpMessagingTemplate.convertAndSend(topic, new ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
-                    //                 messageEntity.getSenderId(), senderDto.getName(), "", messageEntity.getMessage(), messageEntity.getCreateAt()));
-                    eventPublisher.publishEvent(new TopicEvent(topic, new ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(), messageEntity.getSenderId(), senderDto.getName(), "", messageEntity.getMessage(), messageEntity.getCreateAt())));
-                } 
+                    // simpMessagingTemplate.convertAndSend(topic, new
+                    // ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
+                    // messageEntity.getSenderId(), senderDto.getName(), "",
+                    // messageEntity.getMessage(), messageEntity.getCreateAt()));
+                    eventPublisher.publishEvent(new TopicEvent(topic,
+                            new ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
+                                    messageEntity.getSenderId(), senderDto.getName(), "", messageEntity.getMessage(),
+                                    messageEntity.getCreateAt())));
+                }
             }
             return ChatRoomLeaveResponseDto.success();
         } catch (Exception e) {

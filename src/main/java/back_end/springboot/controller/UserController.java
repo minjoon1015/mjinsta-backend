@@ -1,9 +1,7 @@
 package back_end.springboot.controller;
 
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,47 +32,47 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<? super UserMeResponseDto> me(@AuthenticationPrincipal UserDetails userDetails) {
-        return userService.me(userDetails.getUsername());
+    public ResponseEntity<? super UserMeResponseDto> me(@AuthenticationPrincipal String id) {
+        return userService.me(id);
     }
 
     @PostMapping("/follow")
-    public ResponseEntity<? super FollowResponseDto> follow(@RequestBody FollowRequestDto requestDto, @AuthenticationPrincipal UserDetails userDetails) {
-        return userService.follow(requestDto, userDetails.getUsername());
+    public ResponseEntity<? super FollowResponseDto> follow(@RequestBody FollowRequestDto requestDto, @AuthenticationPrincipal String id) {
+        return userService.follow(requestDto, id);
     }
 
     @PostMapping("/un_follow")
-    public ResponseEntity<? super UnFollowResponseDto> unFollow(@RequestBody UnFollowRequestDto requestDto, @AuthenticationPrincipal UserDetails userDetails) {
-        return userService.unFollow(requestDto, userDetails.getUsername());
+    public ResponseEntity<? super UnFollowResponseDto> unFollow(@RequestBody UnFollowRequestDto requestDto, @AuthenticationPrincipal String id) {
+        return userService.unFollow(requestDto, id);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<? super GetUserListForKeywordResponseDto> getUserList(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("keyword") String keyword) {
-        return userService.getUserList(userDetails.getUsername(), keyword);
+    public ResponseEntity<? super GetUserListForKeywordResponseDto> getUserList(@AuthenticationPrincipal String id, @RequestParam("keyword") String keyword) {
+        return userService.getUserList(id, keyword);
     }
 
     @GetMapping("/details/info")
-    public ResponseEntity<? super GetUserDetailsInfoResponseDto> getUserDetailsInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("searchId") String searchId) {
-        return userService.getUserDetailsInfo(searchId, userDetails.getUsername());
+    public ResponseEntity<? super GetUserDetailsInfoResponseDto> getUserDetailsInfo(@AuthenticationPrincipal String id, @RequestParam("searchId") String searchId) {
+        return userService.getUserDetailsInfo(searchId, id);
     }
 
     @GetMapping("/get/recommend/list")
-    public ResponseEntity<? super GetRecommendListResponseDto> getRecommendList(@AuthenticationPrincipal UserDetails userDetails, @RequestParam(value = "isAll", required = false) Boolean isAll) {
-        return userService.getRecommendList(userDetails.getUsername(), isAll);
+    public ResponseEntity<? super GetRecommendListResponseDto> getRecommendList(@AuthenticationPrincipal String id, @RequestParam(value = "isAll", required = false) Boolean isAll) {
+        return userService.getRecommendList(id, isAll);
     }
 
     @GetMapping("/get/edit/info")
-    public ResponseEntity<? super GetEditInfoResponseDto> getEditInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        return userService.getEditInfo(userDetails.getUsername());
+    public ResponseEntity<? super GetEditInfoResponseDto> getEditInfo(@AuthenticationPrincipal String id) {
+        return userService.getEditInfo(id);
     }
 
     @PostMapping("/edit/info")
-    public ResponseEntity<? super EditInfoResponseDto> editInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestBody EditUserDto requestDto) {
-        return userService.editInfo(userDetails.getUsername(), requestDto);
+    public ResponseEntity<? super EditInfoResponseDto> editInfo(@AuthenticationPrincipal String id, @RequestBody EditUserDto requestDto) {
+        return userService.editInfo(id, requestDto);
     }
 
     @PostMapping("/edit/password")
-    public ResponseEntity<? super EditPasswordResponseDto> editPassword(@AuthenticationPrincipal UserDetails userDetails, @RequestBody EditPasswordRequestDto requestDto) {
-        return userService.editPassword(userDetails.getUsername(), requestDto);
-    }   
+    public ResponseEntity<? super EditPasswordResponseDto> editPassword(@AuthenticationPrincipal String id, @RequestBody EditPasswordRequestDto requestDto) {
+        return userService.editPassword(id, requestDto);
+    } 
 }

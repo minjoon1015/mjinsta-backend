@@ -1,5 +1,8 @@
 package back_end.springboot.config;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -7,6 +10,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -18,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtProvider jwtProvider;
-    private final UserDetailsService userDetailsService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -30,9 +33,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 token = token.substring(7);
                 if (jwtProvider.validateToken(token)) {
                     String userId = jwtProvider.getUserIdFromToken(token);
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
-                    accessor.setUser(auth);
+                    String role = jwtProvider.getRoleFromToken(token);
+                    Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority(role));
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            authorities);
+                    accessor.setUser(authentication);
                 }
             }
         }

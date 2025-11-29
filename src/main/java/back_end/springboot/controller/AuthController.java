@@ -28,7 +28,6 @@ import back_end.springboot.dto.response.auth.DuplicateCheckIdResponseDto;
 import back_end.springboot.dto.response.auth.OauthSignUpResponseDto;
 import back_end.springboot.dto.response.auth.SignInResponseDto;
 import back_end.springboot.dto.response.auth.SignUpResponseDto;
-import back_end.springboot.service.AuthCodeService;
 import back_end.springboot.service.AuthService;
 import lombok.RequiredArgsConstructor;
 

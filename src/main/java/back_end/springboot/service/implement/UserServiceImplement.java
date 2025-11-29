@@ -108,7 +108,6 @@ public class UserServiceImplement implements UserService {
             followerEntity.plusFollow();
             userRepository.save(followerEntity);
             userRepository.save(followingEntity);
-
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
             String key = "recommend" + id;
             Object saveRecommendList = ops.get(key);
@@ -124,22 +123,19 @@ public class UserServiceImplement implements UserService {
                 }).collect(Collectors.toList());
                 ops.set(key, updateList);
             }
-
             AlarmEntity alarmEntity = new AlarmEntity(followingEntity.getId(), AlarmType.FOLLOW, Integer.toString(saveEntity.getId()));
             alarmRepository.save(alarmEntity);
-
             FollowAlarmDto followAlarmDto = new FollowAlarmDto(AlarmType.FOLLOW, LocalDateTime.now(),
                     followerEntity.getId(), followerEntity.getProfileImage());
             //simpMessagingTemplate.convertAndSendToUser(followingEntity.getId(), "/queue/notify", followAlarmDto);
             eventPublisher.publishEvent(new NotificationEvent(followingEntity.getId(), "/queue/notify", followAlarmDto));
             return FollowResponseDto.success();
-
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return ResponseDto.databaseError();
         }
-    }
+    } 
 
     @Override
     public ResponseEntity<? super UpdateProfileUrlResponseDto> updateProfileImage(String id, String url) {
@@ -218,8 +214,6 @@ public class UserServiceImplement implements UserService {
             if (user == null) {
                 return ResponseDto.badRequest();
             }
-            System.out.println(user.getId());
-            System.out.println(user.getProfileImage());
             return GetUserDetailsInfoResponseDto.success(new UserDetailsDto(user.getId(), user.getName(),
                     user.getProfileImage(), user.getComment(), user.getFollowCount(), user.getFollowerCount(),
                     user.getPostCount(), user.getIsFollowed() == 1 ? true : false));

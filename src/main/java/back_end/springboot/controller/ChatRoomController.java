@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,60 +38,60 @@ public class ChatRoomController {
     private final ChatService chatService;
 
     @GetMapping("/getList")
-    public ResponseEntity<? super GetChatRoomListResponseDto> getList(@AuthenticationPrincipal UserDetails userDetails) {
-        return chatService.getList(userDetails.getUsername());
+    public ResponseEntity<? super GetChatRoomListResponseDto> getList(@AuthenticationPrincipal String id) {
+        return chatService.getList(id);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<? super ChatRoomCreateResponseDto> createRoom(@RequestBody ChatRoomCreateRequestDto requestDto, @AuthenticationPrincipal UserDetails userDetails) {
-        return chatService.createRoom(requestDto, userDetails.getUsername(), LocalDateTime.now());
+    public ResponseEntity<? super ChatRoomCreateResponseDto> createRoom(@RequestBody ChatRoomCreateRequestDto requestDto, @AuthenticationPrincipal String id) {
+        return chatService.createRoom(requestDto, id, LocalDateTime.now());
     }
 
     @GetMapping("/recommend/invite/list")
-    public ResponseEntity<? super GetRecommendInviteListResponseDto> getRecommendInviteList(@AuthenticationPrincipal UserDetails userDetails) {
-        return chatService.getRecommendInviteList(userDetails.getUsername());
+    public ResponseEntity<? super GetRecommendInviteListResponseDto> getRecommendInviteList(@AuthenticationPrincipal String id) {
+        return chatService.getRecommendInviteList(id);
     }
 
     @GetMapping("/history")
     public ResponseEntity<? super GetChatMessageListResponseDto> getHistory(
         @RequestParam("chatRoomId") Integer chatRoomId, 
         @RequestParam(value = "messageId", required = false) String messageId, 
-        @AuthenticationPrincipal UserDetails userDetails) {
-        return chatService.getHistory(chatRoomId, messageId, userDetails.getUsername());
+        @AuthenticationPrincipal String id) {
+        return chatService.getHistory(chatRoomId, messageId, id);
     }
 
     @GetMapping("/get/members/read_info")
-    public ResponseEntity<? super GetChatMembersReadInfoResponseDto> getMembersReadInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("chatRoomId") Integer chatRoomId) {
-        return chatService.getMembersReadInfo(userDetails.getUsername(), chatRoomId);
+    public ResponseEntity<? super GetChatMembersReadInfoResponseDto> getMembersReadInfo(@AuthenticationPrincipal String id, @RequestParam("chatRoomId") Integer chatRoomId) {
+        return chatService.getMembersReadInfo(id, chatRoomId);
     }
 
     @PutMapping("/update/group/profile_image")
-    public ResponseEntity<? super UpdateGroupProfileImageResponseDto> updateGroupProfileImage(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("file") MultipartFile image, @RequestParam("chatRoomId") Integer chatRoomId) {
-        return chatService.updateGroupProfileImage(userDetails.getUsername(), chatRoomId, image);
+    public ResponseEntity<? super UpdateGroupProfileImageResponseDto> updateGroupProfileImage(@AuthenticationPrincipal String id, @RequestParam("file") MultipartFile image, @RequestParam("chatRoomId") Integer chatRoomId) {
+        return chatService.updateGroupProfileImage(id, chatRoomId, image);
     }
 
     @PutMapping("/update/group/title")
-    public ResponseEntity<? super UpdateGroupTitleResponseDto> updateGroupTitle(@AuthenticationPrincipal UserDetails userDetails, @RequestBody UpdateGroupTitleRequestDto requestDto) {
-        return chatService.updateGroupTitle(userDetails.getUsername(), requestDto);
+    public ResponseEntity<? super UpdateGroupTitleResponseDto> updateGroupTitle(@AuthenticationPrincipal String id, @RequestBody UpdateGroupTitleRequestDto requestDto) {
+        return chatService.updateGroupTitle(id, requestDto);
     }
 
     @GetMapping("/get/members/info")
-    public ResponseEntity<? super GetChatMembersInfoResponseDto> getMembersInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("chatRoomId") Integer chatRoomId) {
-        return chatService.getMembersInfo(userDetails.getUsername(), chatRoomId);
+    public ResponseEntity<? super GetChatMembersInfoResponseDto> getMembersInfo(@AuthenticationPrincipal String id, @RequestParam("chatRoomId") Integer chatRoomId) {
+        return chatService.getMembersInfo(id, chatRoomId);
     }
 
     @GetMapping("/invite/user_search")
-    public ResponseEntity<? super InviteUserSearchResponseDto> inviteUserSearch(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("keyword")String keyword, @RequestParam("chatRoomId") Integer chatRoomId) {
-        return chatService.inviteUserSearch(userDetails.getUsername(), chatRoomId, keyword);
+    public ResponseEntity<? super InviteUserSearchResponseDto> inviteUserSearch(@AuthenticationPrincipal String id, @RequestParam("keyword")String keyword, @RequestParam("chatRoomId") Integer chatRoomId) {
+        return chatService.inviteUserSearch(id, chatRoomId, keyword);
     }
 
     @PostMapping("/invite/user")
-    public ResponseEntity<? super ChatRoomInviteUserResponseDto> inviteUser(@AuthenticationPrincipal UserDetails userDetails, @RequestBody ChatRoomInviteUserRequestDto requestDto) {
-        return chatService.inviteUser(userDetails.getUsername(), requestDto);
+    public ResponseEntity<? super ChatRoomInviteUserResponseDto> inviteUser(@AuthenticationPrincipal String id, @RequestBody ChatRoomInviteUserRequestDto requestDto) {
+        return chatService.inviteUser(id, requestDto);
     }
 
     @DeleteMapping("/room/leave")
-    public ResponseEntity<? super ChatRoomLeaveResponseDto> roomLeave(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("chatRoomId") Integer chatRoomId) {
-        return chatService.roomLeave(userDetails.getUsername(), chatRoomId);
+    public ResponseEntity<? super ChatRoomLeaveResponseDto> roomLeave(@AuthenticationPrincipal String id, @RequestParam("chatRoomId") Integer chatRoomId) {
+        return chatService.roomLeave(id, chatRoomId);
     }
 }

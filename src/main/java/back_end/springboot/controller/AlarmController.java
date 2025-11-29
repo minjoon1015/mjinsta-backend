@@ -18,7 +18,7 @@ public class AlarmController {
     private final AlarmService alarmService;
 
     @GetMapping("/getList")
-    public ResponseEntity<? super GetAlarmListResponseDto> getList(@AuthenticationPrincipal UserDetails userDetails) {
-        return alarmService.getList(userDetails.getUsername());
+    public ResponseEntity<? super GetAlarmListResponseDto> getList(@AuthenticationPrincipal String id) {
+        return alarmService.getList(id);
     }
 }

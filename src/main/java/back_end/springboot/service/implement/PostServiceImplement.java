@@ -215,6 +215,7 @@ public class PostServiceImplement implements PostService {
             // userId == sender
             UserEntity senderEntity = userRepository.findById(userId).orElse(null);
             PostEntity savedPostEntity = postRepository.findByIdWithLock(postId).orElse(null);
+
             if (savedPostEntity == null)
                 return ResponseDto.badRequest();
             LocalDateTime createAt = LocalDateTime.now();
@@ -225,13 +226,15 @@ public class PostServiceImplement implements PostService {
                         .save(new PostFavoriteEntity(savedPostEntity.getId(), userId, createAt));
                 savedPostEntity.increaseLike();
                 postRepository.save(savedPostEntity);
-                alarmRepository.save(new AlarmEntity(savedPostEntity.getUserId(), AlarmType.POST_LIKE_RECEIVE,
+                if (!senderEntity.getId().equals(savedPostEntity.getUserId())) {
+                    alarmRepository.save(new AlarmEntity(savedPostEntity.getUserId(), AlarmType.POST_LIKE_RECEIVE,
                         Integer.toString(save.getId())));
                 eventPublisher
                         .publishEvent(new NotificationEvent(savedPostEntity.getUserId(), "/queue/notify",
                                 new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, createAt, savedPostEntity.getId(),
                                         new SimpleUserDto(senderEntity.getId(), senderEntity.getName(),
                                                 senderEntity.getProfileImage(), false))));
+                } 
                 return PostLikeResponseDto.success();
             } else {
                 postFavoriteRepository.delete(favoriteEntity);

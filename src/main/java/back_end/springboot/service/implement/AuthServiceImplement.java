@@ -60,7 +60,7 @@ public class AuthServiceImplement implements AuthService {
             if (!passwordEncoder.matches(requestDto.getPassword(), userEntity.getPassword()))
                 return SignInResponseDto.notExistedPassword();
 
-            String token = jwtProvider.generateToken(userEntity.getId());
+            String token = jwtProvider.generateToken(userEntity.getId(), userEntity.getRole());
             return SignInResponseDto.success(token);
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,13 +107,12 @@ public class AuthServiceImplement implements AuthService {
                 SignInResponseDto.badRequest();
             String id = (String) userInfo.get("sub");
             String name = (String) userInfo.get("name");
-            String profileImage = (String) userInfo.get("picture");
             String email = (String) userInfo.get("email");
 
             boolean existedEmail = userRepository.existsByEmail(email);
             if (existedEmail) {
                 UserEntity userEntity = userRepository.findByEmail(email);
-                String token = jwtProvider.generateToken(userEntity.getId());
+                String token = jwtProvider.generateToken(userEntity.getId(), userEntity.getRole());
                 return SignInResponseDto.success(token);
             }
 
@@ -134,7 +133,7 @@ public class AuthServiceImplement implements AuthService {
                         userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                String token = jwtProvider.generateToken(id);
+                String token = jwtProvider.generateToken(id, saved.getRole());
                 return SignInResponseDto.success(token);
             }
         } catch (Exception e) {
@@ -188,7 +187,7 @@ public class AuthServiceImplement implements AuthService {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            return OauthSignUpResponseDto.success(jwtProvider.generateToken(userEntity.getId()));
+            return OauthSignUpResponseDto.success(jwtProvider.generateToken(userEntity.getId(), userEntity.getRole()));
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
