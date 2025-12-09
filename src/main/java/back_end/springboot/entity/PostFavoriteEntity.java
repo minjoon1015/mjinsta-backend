@@ -23,12 +23,15 @@ public class PostFavoriteEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private Integer postId;
     private String userId;
     private LocalDateTime createAt;
 
-    public PostFavoriteEntity(Integer postId, String userId, LocalDateTime createAt) {
-        this.postId = postId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", referencedColumnName = "id")
+    private PostEntity post;
+
+    public PostFavoriteEntity(PostEntity post, String userId, LocalDateTime createAt) {
+        this.post = post;
         this.userId = userId;
         this.createAt = createAt;
     }

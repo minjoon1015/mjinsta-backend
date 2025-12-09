@@ -22,23 +22,24 @@ public class SessionEventListener {
     @EventListener
     public void handleConnectEvent(SessionConnectEvent event) throws JsonProcessingException {
         Principal principal = event.getUser();
-        if (principal == null) return;
+        if (principal == null)
+            return;
 
         MessageHeaders headers = event.getMessage().getHeaders();
         String sessionId = SimpMessageHeaderAccessor.getSessionId(headers);
 
         SimpSessionInfo sessionInfo = new SimpSessionInfo(sessionId, principal.getName());
         repository.save(sessionInfo);
-        System.out.println(principal.getName() + "세션 저장 완료");
     }
 
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         String sessionId = event.getSessionId();
         Principal principal = event.getUser();
-        
         if (principal != null && sessionId != null) {
             repository.delete(sessionId, principal.getName());
+        } else {
+            System.out.println("DISCONNECT: Principal is NULL. Cleanup failed for sessionId: " + sessionId);
         }
     }
 

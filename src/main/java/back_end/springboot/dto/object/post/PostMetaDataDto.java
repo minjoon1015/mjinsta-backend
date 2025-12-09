@@ -16,4 +16,5 @@ public class PostMetaDataDto {
     private String comment;
     private String location;
     private LinkedHashMap<String, List<PostTagsDto>> tags;
+    private List<String> hashtags;
 }

@@ -2,9 +2,11 @@ package back_end.springboot.service.implement;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,7 @@ import back_end.springboot.common.AlarmType;
 import back_end.springboot.common.MessageType;
 import back_end.springboot.component.FileManager;
 import back_end.springboot.component.FileValidateManager;
+import back_end.springboot.dto.object.ai.AiAnalysisResultDto;
 import back_end.springboot.dto.object.alarm.extend.PostCommentAlarmDto;
 import back_end.springboot.dto.object.alarm.extend.PostLikeAlarmDto;
 import back_end.springboot.dto.object.alarm.extend.PostTagAlarmDto;
@@ -45,14 +48,17 @@ import back_end.springboot.entity.PostAttachmentsUserTagsEntity;
 import back_end.springboot.entity.PostCommentEntity;
 import back_end.springboot.entity.PostEntity;
 import back_end.springboot.entity.PostFavoriteEntity;
+import back_end.springboot.entity.PostTagsEntity;
 import back_end.springboot.entity.UserEntity;
 import back_end.springboot.repository.AlarmRepository;
 import back_end.springboot.repository.PostAttachmentsRepository;
 import back_end.springboot.repository.PostRepository;
+import back_end.springboot.repository.PostTagsRepository;
 import back_end.springboot.repository.UserRepository;
 import back_end.springboot.repository.PostAttachmentsUserTagRepository;
 import back_end.springboot.repository.PostCommentRepository;
 import back_end.springboot.repository.PostFavoriteRepository;
+import back_end.springboot.service.AiAnalysisService;
 import back_end.springboot.service.PostService;
 import lombok.RequiredArgsConstructor;
 
@@ -62,6 +68,7 @@ public class PostServiceImplement implements PostService {
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher eventPublisher;
     private final FileManager fileManager;
+    private final AiAnalysisService aiAnalysisService;
 
     private final AlarmRepository alarmRepository;
     private final PostFavoriteRepository postFavoriteRepository;
@@ -70,6 +77,7 @@ public class PostServiceImplement implements PostService {
     private final PostAttachmentsRepository postAttachmentRepository;
     private final PostAttachmentsUserTagRepository postAttachmentsUserTagRepository;
     private final PostCommentRepository postCommentRepository;
+    private final PostTagsRepository postTagsRepository;
 
     @Override
     @Transactional
@@ -87,6 +95,7 @@ public class PostServiceImplement implements PostService {
                     new PostEntity(userId, metaData.getComment(), metaData.getLocation(), 0, 0, LocalDateTime.now(),
                             null));
             LinkedHashMap<String, List<PostTagsDto>> tagsList = metaData.getTags();
+            List<String> hashtags = metaData.getHashtags();
 
             int count = 0;
             UserEntity sender = userRepository.findById(userId).orElse(null);
@@ -96,7 +105,7 @@ public class PostServiceImplement implements PostService {
             sender.plusPost();
             userRepository.save(sender);
             String folderName = "post" + "/" + savePostEntity.getId();
-            Set<String> ids = new HashSet<>();
+            Map<String, String> ids = new HashMap<>();
             for (MultipartFile image : images) {
                 MessageType type = FileValidateManager.getFileType(image);
                 if (type != MessageType.IMAGE) {
@@ -110,6 +119,13 @@ public class PostServiceImplement implements PostService {
                         .save(new PostAttachmentsEntity(savePostEntity, url));
                 if (count == 0) {
                     savePostEntity.setProfileImage(url);
+                    AiAnalysisResultDto aiAnalysisResultDto = null;
+                    try {
+                        aiAnalysisResultDto = aiAnalysisService.analyzeImage(url);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    savePostEntity.setAiObjectTag(aiAnalysisResultDto.getObjectTag());
                     postRepository.save(savePostEntity);
                 }
                 List<PostTagsDto> tags = tagsList.get(Integer.toString(count++));
@@ -123,25 +139,23 @@ public class PostServiceImplement implements PostService {
                         }
                         Double x = tag.getX();
                         Double y = tag.getY();
-                        PostAttachmentsUserTagsEntity save = postAttachmentsUserTagRepository
+                        PostAttachmentsUserTagsEntity pe = postAttachmentsUserTagRepository
                                 .save(new PostAttachmentsUserTagsEntity(saveAttachmentEntity, id, x, y,
                                         savePostEntity.getCreateAt()));
-                        // alarmRepository.save(
-                        // new AlarmEntity(id, AlarmType.POST_TAG, Integer.toString(save.getId())));
-                        // eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
-                        // new PostTagAlarmDto(AlarmType.POST_TAG, savePostEntity.getCreateAt(),
-                        // sender.getId(),
-                        // sender.getProfileImage(), savePostEntity.getId())));
-                        ids.add(id);
+                        ids.put(id, pe.getId().toString());
                     }
                 }
             }
-            for (String id : ids) {
+            if (hashtags != null && !hashtags.isEmpty()) {
+                postTagsRepository.saveAll(hashtags.stream().map(h -> new PostTagsEntity(savePostEntity.getId(), h))
+                        .collect(Collectors.toList()));
+            }
+            for (String id : ids.keySet()) {
                 eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
                         new PostTagAlarmDto(AlarmType.POST_TAG, savePostEntity.getCreateAt(), sender.getId(),
                                 sender.getProfileImage(), savePostEntity.getId())));
                 alarmRepository
-                        .save(new AlarmEntity(id, AlarmType.POST_TAG, Integer.toString(savePostEntity.getId())));
+                        .save(new AlarmEntity(id, AlarmType.POST_TAG, ids.get(id)));
             }
             return PostCreateResponseDto.success();
         } catch (Exception e) {
@@ -223,18 +237,18 @@ public class PostServiceImplement implements PostService {
                     .findByPostIdAndUserId(savedPostEntity.getId(), userId);
             if (favoriteEntity == null) {
                 PostFavoriteEntity save = postFavoriteRepository
-                        .save(new PostFavoriteEntity(savedPostEntity.getId(), userId, createAt));
+                        .save(new PostFavoriteEntity(savedPostEntity, userId, createAt));
                 savedPostEntity.increaseLike();
                 postRepository.save(savedPostEntity);
                 if (!senderEntity.getId().equals(savedPostEntity.getUserId())) {
                     alarmRepository.save(new AlarmEntity(savedPostEntity.getUserId(), AlarmType.POST_LIKE_RECEIVE,
-                        Integer.toString(save.getId())));
-                eventPublisher
-                        .publishEvent(new NotificationEvent(savedPostEntity.getUserId(), "/queue/notify",
-                                new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, createAt, savedPostEntity.getId(),
-                                        new SimpleUserDto(senderEntity.getId(), senderEntity.getName(),
-                                                senderEntity.getProfileImage(), false))));
-                } 
+                            Integer.toString(save.getId())));
+                    eventPublisher
+                            .publishEvent(new NotificationEvent(savedPostEntity.getUserId(), "/queue/notify",
+                                    new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, createAt, savedPostEntity.getId(),
+                                            new SimpleUserDto(senderEntity.getId(), senderEntity.getName(),
+                                                    senderEntity.getProfileImage(), false))));
+                }
                 return PostLikeResponseDto.success();
             } else {
                 postFavoriteRepository.delete(favoriteEntity);

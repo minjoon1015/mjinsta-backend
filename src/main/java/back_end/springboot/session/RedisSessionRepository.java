@@ -1,5 +1,6 @@
 package back_end.springboot.session;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +27,7 @@ public class RedisSessionRepository {
         String key = KEY_PREFIX + sessionInfo.getUsername() + ":" + sessionInfo.getSessionId();
         String json = objectMapper.writeValueAsString(sessionInfo);
 
-        redisTemplate.opsForValue().set(key, json);
+        redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(30));
         redisTemplate.opsForSet().add(KEY_PREFIX + sessionInfo.getUsername(), key);
     }
 

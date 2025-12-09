@@ -1,6 +1,5 @@
 package back_end.springboot.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import back_end.springboot.common.AlarmType;

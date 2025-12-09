@@ -66,7 +66,7 @@ public class AlarmServiceImplement implements AlarmService {
                     } else if (l.getAlarmType() == AlarmType.POST_LIKE_RECEIVE) {
                         PostFavoriteEntity favoriteEntity = postFavoriteRepository.findById(Integer.parseInt(l.getReferenceId())).orElse(null);
                         UserEntity user = userRepository.findById(favoriteEntity.getUserId()).orElse(null);
-                        alarmList.add(new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, l.getCreate_at(), favoriteEntity.getPostId(), new SimpleUserDto(user.getId(), user.getName(), user.getProfileImage(), false)));
+                        alarmList.add(new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, l.getCreate_at(), favoriteEntity.getPost().getId(), new SimpleUserDto(user.getId(), user.getName(), user.getProfileImage(), false)));
                     } else if (l.getAlarmType() == AlarmType.POST_COMMENT_RECEIVE) {
                         PostCommentEntity commentEntity = postCommentRepository.findById(Integer.parseInt(l.getReferenceId())).orElse(null);
                         UserEntity user = userRepository.findById(commentEntity.getUserId()).orElse(null);
