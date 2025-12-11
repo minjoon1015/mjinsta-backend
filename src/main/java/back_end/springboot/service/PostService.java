@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import back_end.springboot.dto.request.post.PostCommentRequestDto;
+import back_end.springboot.dto.response.post.CommentPaginationListResponseDto;
+import back_end.springboot.dto.response.post.CommentTopListResponseDto;
 import back_end.springboot.dto.response.post.PostCommentResponseDto;
 import back_end.springboot.dto.response.post.PostCreateResponseDto;
 import back_end.springboot.dto.response.post.PostGetDetailsInfoResponseDto;
@@ -18,4 +20,6 @@ public interface PostService {
     ResponseEntity<? super PostGetDetailsInfoResponseDto> getDetailsInfo(Integer postId, String userId);
     ResponseEntity<? super PostLikeResponseDto> like(String userId, Integer postId);
     ResponseEntity<? super PostCommentResponseDto> comment(PostCommentRequestDto requestDto);
+    ResponseEntity<? super CommentTopListResponseDto> getCommentTopList(String userId, Integer postId);
+    ResponseEntity<? super CommentPaginationListResponseDto> getCommentPaginationList(String userId, Integer postId, Integer commentId);
 }

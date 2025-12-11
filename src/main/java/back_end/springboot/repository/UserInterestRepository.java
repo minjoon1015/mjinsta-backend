@@ -49,7 +49,6 @@ public interface UserInterestRepository extends JpaRepository<UserInterestEntity
             "GROUP BY aggregated.user_id, aggregated.keyword " +
 
             "ON DUPLICATE KEY UPDATE " +
-            // 수정: VALUES() 함수는 INSERT 대상 컬럼명인 score를 사용해야 합니다.
             "    score = score + VALUES(score)", nativeQuery = true)
     void updateHashTagInterests(@Param("days") int days);
 }

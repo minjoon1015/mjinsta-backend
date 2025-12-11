@@ -8,15 +8,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import back_end.springboot.common.AlarmType;
@@ -37,6 +43,8 @@ import back_end.springboot.dto.object.post.PostTagsDto;
 import back_end.springboot.dto.object.user.SimpleUserDto;
 import back_end.springboot.dto.request.post.PostCommentRequestDto;
 import back_end.springboot.dto.response.ResponseDto;
+import back_end.springboot.dto.response.post.CommentPaginationListResponseDto;
+import back_end.springboot.dto.response.post.CommentTopListResponseDto;
 import back_end.springboot.dto.response.post.PostCommentResponseDto;
 import back_end.springboot.dto.response.post.PostCreateResponseDto;
 import back_end.springboot.dto.response.post.PostGetDetailsInfoResponseDto;
@@ -69,6 +77,8 @@ public class PostServiceImplement implements PostService {
     private final ApplicationEventPublisher eventPublisher;
     private final FileManager fileManager;
     private final AiAnalysisService aiAnalysisService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private final AlarmRepository alarmRepository;
     private final PostFavoriteRepository postFavoriteRepository;
@@ -277,11 +287,9 @@ public class PostServiceImplement implements PostService {
             if (savedPost == null)
                 return ResponseDto.databaseError();
             PostCommentEntity postCommentEntity = postCommentRepository.save(new PostCommentEntity(
-                    requestDto.getUserId(), savedPost.getId(), requestDto.getComment(), LocalDateTime.now()));
+                    userEntity, savedPost.getId(), requestDto.getComment(), LocalDateTime.now()));
             PostCommentDto postCommentDto = new PostCommentDto(postCommentEntity.getId(), postCommentEntity.getPostId(),
-                    userEntity.getId(),
-                    userEntity.getName(), userEntity.getProfileImage(), postCommentEntity.getContent(),
-                    postCommentEntity.getCreateAt());
+                    postCommentEntity.getContent(), postCommentEntity.getCreateAt(), userEntity);
             savedPost.increaseComment();
             postRepository.save(savedPost);
             if (!requestDto.getUserId().equals(savedPost.getUserId())) {
@@ -296,6 +304,68 @@ public class PostServiceImplement implements PostService {
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseDto.databaseError();
+        }
+    }
+
+    @Override
+    public ResponseEntity<? super CommentPaginationListResponseDto> getCommentPaginationList(String userId,
+            Integer postId,
+            Integer commentId) {
+        try {
+            ValueOperations<String, Object> ops = redisTemplate.opsForValue();
+            String key = "post:comment:pagination-list:" + postId + ":user:" + userId + ":comment:" + commentId;
+            Object Object = ops.get(key);
+            int page = 30;
+            Pageable pageable = PageRequest.of(0, page);
+            List<PostCommentDto> commentDtos = new ArrayList<>();
+            if (Object != null) {
+                List<PostCommentDto> cached = objectMapper.convertValue(Object, new TypeReference<List<PostCommentDto>>(){});
+                List<Integer> ExclusionIds = cached.stream().map(c -> c.getId()).collect(Collectors.toList()); 
+                List<PostCommentEntity> saved = postCommentRepository
+                        .findByPostIdAndIdGreaterThanAndIdNotInOrderByCreateAtDesc(postId, commentId, ExclusionIds,
+                                pageable);
+                commentDtos = saved.stream().map(
+                        c -> new PostCommentDto(c.getId(), c.getPostId(), c.getContent(), c.getCreateAt(), c.getUser()))
+                        .collect(Collectors.toList());
+            } else {
+                List<PostCommentEntity> saved = postCommentRepository
+                        .findByPostIdAndIdGreaterThanOrderByCreateAtDesc(postId, commentId, pageable);
+                commentDtos = saved.stream().map(
+                        c -> new PostCommentDto(c.getId(), c.getPostId(), c.getContent(), c.getCreateAt(), c.getUser()))
+                        .collect(Collectors.toList());
+            }
+            return CommentPaginationListResponseDto.success(commentDtos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+    }
+
+    @Override
+    public ResponseEntity<? super CommentTopListResponseDto> getCommentTopList(String userId, Integer postId) {
+        try {
+            ValueOperations<String, Object> ops = redisTemplate.opsForValue();
+            String key = "post:comment:top-list:" + postId + ":user:" + userId;
+            Object Object = ops.get(key);
+            if (Object != null) {
+                return CommentTopListResponseDto
+                        .success(objectMapper.convertValue(Object, new TypeReference<List<PostCommentDto>>() {
+                        }));
+            }
+            int page = 3;
+            Pageable pageable = PageRequest.of(0, page);
+            List<PostCommentEntity> pcl = postCommentRepository
+                    .findByPostIdAndUserIdOrderByCreateAtDesc(postId, userId, pageable);
+            List<PostCommentDto> commentList = pcl.stream().map(pc -> new PostCommentDto(pc.getId(), pc.getPostId(),
+                    pc.getContent(), pc.getCreateAt(), pc.getUser())).collect(Collectors.toList());
+        
+            if (!commentList.isEmpty()) {
+                ops.set(key, commentList, 10, TimeUnit.MINUTES);
+            }
+            return CommentTopListResponseDto.success(commentList);
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseDto.databaseError();
         }
     }

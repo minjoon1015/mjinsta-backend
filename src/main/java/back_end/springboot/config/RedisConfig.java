@@ -1,5 +1,7 @@
 package back_end.springboot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,13 +29,20 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
+        // 1. ObjectMapper 설정: Java 8 Time 모듈만 등록 (LocalDateTime 해결)
+        com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
-        template.setValueSerializer(serializer);
-        template.setHashValueSerializer(serializer);
+        // 2. Value Serializer 생성
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+
+        // 3. Serializer 적용 (깔끔하게 정리)
+        template.setKeySerializer(stringSerializer); // Key는 문자열
+        template.setValueSerializer(jsonSerializer); // Value는 JSON (LocalDateTime 지원)
+        template.setHashKeySerializer(stringSerializer); // Hash Key는 문자열
+        template.setHashValueSerializer(jsonSerializer); // Hash Value는 JSON
+
         return template;
     }
-
 }

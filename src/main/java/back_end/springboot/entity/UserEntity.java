@@ -1,11 +1,18 @@
 package back_end.springboot.entity;
 
+import java.util.List;
+
+import org.hibernate.annotations.BatchSize;
+
 import back_end.springboot.common.Role;
 import back_end.springboot.common.UserType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +42,10 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
     private String socialId;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 100)
+    private List<PostCommentEntity> comments;
 
     public UserEntity(String id, String password, String name, String sex, String comment, String email, String address, String addressDetail, String profileImage, UserType type, String socialId) {
         this.id = id;
