@@ -68,6 +68,7 @@ import back_end.springboot.repository.PostCommentRepository;
 import back_end.springboot.repository.PostFavoriteRepository;
 import back_end.springboot.service.AiAnalysisService;
 import back_end.springboot.service.PostService;
+import back_end.springboot.service.TagNormalizationService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -79,6 +80,7 @@ public class PostServiceImplement implements PostService {
     private final AiAnalysisService aiAnalysisService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final TagNormalizationService tagNormalizationService;
 
     private final AlarmRepository alarmRepository;
     private final PostFavoriteRepository postFavoriteRepository;
@@ -157,6 +159,7 @@ public class PostServiceImplement implements PostService {
                 }
             }
             if (hashtags != null && !hashtags.isEmpty()) {
+                hashtags = tagNormalizationService.extractHeadNouns(hashtags);
                 postTagsRepository.saveAll(hashtags.stream().map(h -> new PostTagsEntity(savePostEntity.getId(), h))
                         .collect(Collectors.toList()));
             }
