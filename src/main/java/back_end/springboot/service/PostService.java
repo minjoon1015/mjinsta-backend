@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import back_end.springboot.dto.request.post.PostAddViewHistoryRequestDto;
 import back_end.springboot.dto.request.post.PostCommentRequestDto;
 import back_end.springboot.dto.response.post.CommentPaginationListResponseDto;
 import back_end.springboot.dto.response.post.CommentTopListResponseDto;
@@ -22,4 +23,5 @@ public interface PostService {
     ResponseEntity<? super PostCommentResponseDto> comment(PostCommentRequestDto requestDto);
     ResponseEntity<? super CommentTopListResponseDto> getCommentTopList(String userId, Integer postId);
     ResponseEntity<? super CommentPaginationListResponseDto> getCommentPaginationList(String userId, Integer postId, Integer commentId);
+    void addViewHistory(String userId, PostAddViewHistoryRequestDto requestDto);
 }

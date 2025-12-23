@@ -1,5 +1,6 @@
 package back_end.springboot.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.BatchSize;
@@ -42,6 +43,7 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
     private String socialId;
+    private LocalDateTime lastLoginAt;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 100)
@@ -63,6 +65,7 @@ public class UserEntity {
         this.role = Role.USER;
         this.type = type;
         this.socialId = socialId;
+        this.lastLoginAt = null;
     }
     
     public void plusFollow() {

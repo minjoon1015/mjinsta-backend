@@ -36,7 +36,6 @@ public class PostEntity {
     private Integer commentCount;
     private LocalDateTime createAt;
     private String profileImage;
-    private String aiObjectTag;
 
     public void increaseLike() {
         this.favoriteCount++;

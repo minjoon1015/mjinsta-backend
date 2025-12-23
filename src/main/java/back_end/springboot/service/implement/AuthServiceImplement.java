@@ -1,5 +1,8 @@
 package back_end.springboot.service.implement;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 
@@ -7,8 +10,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,22 +48,25 @@ public class AuthServiceImplement implements AuthService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final MailManager mailManager;
-    private final UserDetailsService userDetailsService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
     @Override
     public ResponseEntity<? super SignInResponseDto> signIn(SignInRequestDto requestDto) {
         try {
-            if (requestDto == null)
-                return ResponseDto.badRequest();
             UserEntity userEntity = userRepository.findById(requestDto.getId()).orElse(null);
             if (userEntity == null)
                 return SignInResponseDto.notExistedId();
+
+            if (userEntity.getType() != UserType.LOCAL) 
+                return SignInResponseDto.badRequest();
+
             if (!passwordEncoder.matches(requestDto.getPassword(), userEntity.getPassword()))
                 return SignInResponseDto.notExistedPassword();
 
             String token = jwtProvider.generateToken(userEntity.getId(), userEntity.getRole());
+            userEntity.setLastLoginAt(LocalDateTime.now());
+            userRepository.save(userEntity);
             return SignInResponseDto.success(token);
         } catch (Exception e) {
             e.printStackTrace();
@@ -104,36 +110,22 @@ public class AuthServiceImplement implements AuthService {
     public ResponseEntity<? super SignInResponseDto> oauth(Map<String, Object> userInfo) {
         try {
             if (userInfo == null)
-                SignInResponseDto.badRequest();
+                return SignInResponseDto.badRequest();
             String id = (String) userInfo.get("sub");
             String name = (String) userInfo.get("name");
             String email = (String) userInfo.get("email");
 
-            boolean existedEmail = userRepository.existsByEmail(email);
-            if (existedEmail) {
-                UserEntity userEntity = userRepository.findByEmail(email);
-                String token = jwtProvider.generateToken(userEntity.getId(), userEntity.getRole());
-                return SignInResponseDto.success(token);
-            }
-
-            UserEntity saved = userRepository.findById(id).orElse(null);    
+            UserEntity saved = userRepository.findBySocialId(id);
             if (saved == null) {
                 ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-                UserEntity userEntity = objectMapper.convertValue(ops.get(id), new TypeReference<UserEntity>() {
-                });
-                if (userEntity == null) {
-                    userEntity = new UserEntity(null, null, name, null, null, email, null, null, null,
-                        UserType.SOCIAL, id);
-                    ops.set(id, userEntity);
-                }
+                UserEntity userEntity = new UserEntity(null, null, name, null, null, 
+                    email, null, null, "", UserType.SOCIAL, id);
+                ops.set(id, userEntity);
                 return SignInResponseDto.newOauthSignIn(id);
             } else {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(saved.getId());
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                String token = jwtProvider.generateToken(id, saved.getRole());
+                if (saved.getType() != UserType.SOCIAL)
+                    return SignInResponseDto.badRequest();
+                String token = jwtProvider.generateToken(saved.getId(), saved.getRole());
                 return SignInResponseDto.success(token);
             }
         } catch (Exception e) {
@@ -176,17 +168,15 @@ public class AuthServiceImplement implements AuthService {
         try {
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
             Object ob = ops.get(requestDto.getSocialId());
-            if (ob == null) return ResponseDto.badRequest();
-            UserEntity userEntity = objectMapper.convertValue(ob, new TypeReference<UserEntity>() {});
+            if (ob == null)
+                return ResponseDto.badRequest();
+            UserEntity userEntity = objectMapper.convertValue(ob, new TypeReference<UserEntity>() {
+            });
             userEntity.setId(requestDto.getId());
             userEntity.setSex(requestDto.getSex());
             userEntity.setAddress(requestDto.getAddress());
             userEntity.setAddressDetail(requestDto.getAddress_detail());
             userRepository.save(userEntity);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userEntity.getId());
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             return OauthSignUpResponseDto.success(jwtProvider.generateToken(userEntity.getId(), userEntity.getRole()));
         } catch (Exception e) {
             e.printStackTrace();

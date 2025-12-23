@@ -12,36 +12,42 @@ import org.springframework.stereotype.Repository;
 import back_end.springboot.entity.UserEntity;
 import back_end.springboot.repository.projection.SimpleUserProjection;
 import back_end.springboot.repository.projection.UserDetailsInfoProjection;
-import jakarta.persistence.LockModeType;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, String> {
-    UserEntity findByIdAndPassword(String id, String password);
+        @Query(value = "select * from user where social_id = :socialId", nativeQuery = true) 
+        UserEntity findBySocialId(String socialId);
+        
+        UserEntity findByIdAndPassword(String id, String password);
 
-    boolean existsByEmail(String email);
+        boolean existsByEmail(String email);
 
-    UserEntity findByEmail(String email);
+        UserEntity findByEmail(String email);
 
-    @Query(value = "SELECT * FROM user WHERE id = :id FOR UPDATE", nativeQuery = true)
-    Optional<UserEntity> findByIdWithLock(String id);
+        @Query(value = "SELECT * FROM user WHERE id = :id FOR UPDATE", nativeQuery = true)
+        Optional<UserEntity> findByIdWithLock(String id);
 
-    @Query(value = "select u.id, u.name, u.profile_image as profileImage\n" + //
-            "from follows as f join user u \n" + //
-            "on f.following_id = u.id\n" + //
-            "where follower_id = :id and following_id like concat('%', :keyword, '%') limit 10;", nativeQuery = true)
-    List<SimpleUserProjection> findAllByIdInFollowing(@Param("id") String id, @Param("keyword") String keyword);
+        @Query(value = "select u.id, u.name, u.profile_image as profileImage\n" + //
+                        "from follows as f join user u \n" + //
+                        "on f.following_id = u.id\n" + //
+                        "where follower_id = :id and following_id like concat('%', :keyword, '%') limit 10;", nativeQuery = true)
+        List<SimpleUserProjection> findAllByIdInFollowing(@Param("id") String id, @Param("keyword") String keyword);
 
-    @Query(value = "select id, name, profile_image\n" + //
-            "from user\n" + //
-            "where id like concat('%', :keyword, '%');", nativeQuery = true)
-    List<SimpleUserProjection> findAllByIdLimit(@Param("keyword") String keyword, @Param("keyword") int limit);
+        @Query(value = "select id, name, profile_image\n" + //
+                        "from user\n" + //
+                        "where id like concat('%', :keyword, '%');", nativeQuery = true)
+        List<SimpleUserProjection> findAllByIdLimit(@Param("keyword") String keyword, @Param("keyword") int limit);
 
-    @Query(value = "select u.id, u.name, u.profile_image as profileImage, u.comment, u.follow_count, u.follower_count, u.post_count, "
-            +
-            "case when f.follower_id = :userId and f.following_id = :searchId then true else false end as isFollowed " +
-            "from user as u " +
-            "left join follows as f on u.id = f.following_id and f.follower_id = :userId " +
-            "where u.id = :searchId limit 5", nativeQuery = true)
-    UserDetailsInfoProjection findUserDetailsInfoById(@Param("searchId") String searchId,
-            @Param("userId") String userId);
+        @Query(value = "select u.id, u.name, u.profile_image as profileImage, u.comment, u.follow_count, u.follower_count, u.post_count, "
+                        +
+                        "case when f.follower_id = :userId and f.following_id = :searchId then true else false end as isFollowed "
+                        +
+                        "from user as u " +
+                        "left join follows as f on u.id = f.following_id and f.follower_id = :userId " +
+                        "where u.id = :searchId limit 5", nativeQuery = true)
+        UserDetailsInfoProjection findUserDetailsInfoById(@Param("searchId") String searchId,
+                        @Param("userId") String userId);
+
+        @Query(value = "select id from user where last_login_at >= DATE_SUB(NOW(), INTERVAL :days DAY)", nativeQuery = true)
+        List<String> findActiveUsers(@Param("days") int days);
 }

@@ -29,4 +29,7 @@ public interface FollowsRepository extends JpaRepository<FollowsEntity, Integer>
                 "from recommend_list as rl inner join user as u\n" + //
                 "on rl.following_id = u.id", nativeQuery = true)
     List<SimpleUserProjection> findRecommendUsersById(@Param("id") String id);
+
+    @Query(value = "select following_id from follows where follower_id =:id", nativeQuery = true)
+    List<String> findByFollowingUserId(@Param("id") String id);
 }

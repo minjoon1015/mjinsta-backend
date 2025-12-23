@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import back_end.springboot.dto.request.post.PostAddViewHistoryRequestDto;
 import back_end.springboot.dto.request.post.PostCommentRequestDto;
 import back_end.springboot.dto.response.post.CommentPaginationListResponseDto;
 import back_end.springboot.dto.response.post.CommentTopListResponseDto;
@@ -82,5 +83,11 @@ public class PostController {
     public ResponseEntity<? super CommentPaginationListResponseDto> getCommentList(@AuthenticationPrincipal String id, @RequestParam("postId") Integer postId,
             @RequestParam(value = "commentId", required = false) Integer commentId) {
         return postService.getCommentPaginationList(id, postId, commentId);
+    }
+
+    @PostMapping("/view_history")
+    public void addViewHistory(
+            @AuthenticationPrincipal String id, @RequestBody PostAddViewHistoryRequestDto requestDto) {
+                postService.addViewHistory(id, requestDto);
     }
 }

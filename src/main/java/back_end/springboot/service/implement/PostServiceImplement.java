@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import back_end.springboot.common.AlarmType;
 import back_end.springboot.common.MessageType;
+import back_end.springboot.common.PostTagsType;
 import back_end.springboot.component.FileManager;
 import back_end.springboot.component.FileValidateManager;
 import back_end.springboot.dto.object.ai.AiAnalysisResultDto;
@@ -41,6 +42,7 @@ import back_end.springboot.dto.object.post.PostMetaDataDto;
 import back_end.springboot.dto.object.post.PostPrevDto;
 import back_end.springboot.dto.object.post.PostTagsDto;
 import back_end.springboot.dto.object.user.SimpleUserDto;
+import back_end.springboot.dto.request.post.PostAddViewHistoryRequestDto;
 import back_end.springboot.dto.request.post.PostCommentRequestDto;
 import back_end.springboot.dto.response.ResponseDto;
 import back_end.springboot.dto.response.post.CommentPaginationListResponseDto;
@@ -57,11 +59,13 @@ import back_end.springboot.entity.PostCommentEntity;
 import back_end.springboot.entity.PostEntity;
 import back_end.springboot.entity.PostFavoriteEntity;
 import back_end.springboot.entity.PostTagsEntity;
+import back_end.springboot.entity.PostViewHistoryEntity;
 import back_end.springboot.entity.UserEntity;
 import back_end.springboot.repository.AlarmRepository;
 import back_end.springboot.repository.PostAttachmentsRepository;
 import back_end.springboot.repository.PostRepository;
 import back_end.springboot.repository.PostTagsRepository;
+import back_end.springboot.repository.PostViewHistoryRepository;
 import back_end.springboot.repository.UserRepository;
 import back_end.springboot.repository.PostAttachmentsUserTagRepository;
 import back_end.springboot.repository.PostCommentRepository;
@@ -90,6 +94,7 @@ public class PostServiceImplement implements PostService {
     private final PostAttachmentsUserTagRepository postAttachmentsUserTagRepository;
     private final PostCommentRepository postCommentRepository;
     private final PostTagsRepository postTagsRepository;
+    private final PostViewHistoryRepository postViewHistoryRepository;
 
     @Override
     @Transactional
@@ -137,7 +142,9 @@ public class PostServiceImplement implements PostService {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    savePostEntity.setAiObjectTag(aiAnalysisResultDto.getObjectTag());
+                    for (String tag : aiAnalysisResultDto.getObjectTag()) {
+                        postTagsRepository.save(new PostTagsEntity(savePostEntity.getId(), tag, PostTagsType.AI_TAG));
+                    }
                     postRepository.save(savePostEntity);
                 }
                 List<PostTagsDto> tags = tagsList.get(Integer.toString(count++));
@@ -160,7 +167,7 @@ public class PostServiceImplement implements PostService {
             }
             if (hashtags != null && !hashtags.isEmpty()) {
                 hashtags = tagNormalizationService.extractHeadNouns(hashtags);
-                postTagsRepository.saveAll(hashtags.stream().map(h -> new PostTagsEntity(savePostEntity.getId(), h))
+                postTagsRepository.saveAll(hashtags.stream().map(h -> new PostTagsEntity(savePostEntity.getId(), h, PostTagsType.HASH_TAG))
                         .collect(Collectors.toList()));
             }
             for (String id : ids.keySet()) {
@@ -297,7 +304,7 @@ public class PostServiceImplement implements PostService {
             postRepository.save(savedPost);
             if (!requestDto.getUserId().equals(savedPost.getUserId())) {
                 alarmRepository.save(
-                        new AlarmEntity(Integer.toString(postCommentEntity.getId()), AlarmType.POST_COMMENT_RECEIVE,
+                        new AlarmEntity(savedPost.getUserId(), AlarmType.POST_COMMENT_RECEIVE,
                                 Integer.toString(postCommentEntity.getId())));
                 eventPublisher.publishEvent(
                         new NotificationEvent(savedPost.getUserId(), "/queue/notify", new PostCommentAlarmDto(
@@ -323,8 +330,10 @@ public class PostServiceImplement implements PostService {
             Pageable pageable = PageRequest.of(0, page);
             List<PostCommentDto> commentDtos = new ArrayList<>();
             if (Object != null) {
-                List<PostCommentDto> cached = objectMapper.convertValue(Object, new TypeReference<List<PostCommentDto>>(){});
-                List<Integer> ExclusionIds = cached.stream().map(c -> c.getId()).collect(Collectors.toList()); 
+                List<PostCommentDto> cached = objectMapper.convertValue(Object,
+                        new TypeReference<List<PostCommentDto>>() {
+                        });
+                List<Integer> ExclusionIds = cached.stream().map(c -> c.getId()).collect(Collectors.toList());
                 List<PostCommentEntity> saved = postCommentRepository
                         .findByPostIdAndIdGreaterThanAndIdNotInOrderByCreateAtDesc(postId, commentId, ExclusionIds,
                                 pageable);
@@ -362,7 +371,7 @@ public class PostServiceImplement implements PostService {
                     .findByPostIdAndUserIdOrderByCreateAtDesc(postId, userId, pageable);
             List<PostCommentDto> commentList = pcl.stream().map(pc -> new PostCommentDto(pc.getId(), pc.getPostId(),
                     pc.getContent(), pc.getCreateAt(), pc.getUser())).collect(Collectors.toList());
-        
+
             if (!commentList.isEmpty()) {
                 ops.set(key, commentList, 10, TimeUnit.MINUTES);
             }
@@ -370,6 +379,16 @@ public class PostServiceImplement implements PostService {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseDto.databaseError();
+        }
+    }
+
+    @Override
+    public void addViewHistory(String userId, PostAddViewHistoryRequestDto requestDto) {
+        try {
+            postViewHistoryRepository.save(new PostViewHistoryEntity(requestDto.getPostId(), userId,
+                    requestDto.getViewedAt(), requestDto.getTimeSpentSeconds()));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

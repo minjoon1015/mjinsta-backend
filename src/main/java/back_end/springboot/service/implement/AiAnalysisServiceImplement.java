@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AiAnalysisServiceImplement implements AiAnalysisService {
     private final AiKeyManager aiKeyManager;
-    private final ObjectMapper objectMapper;
     private final TagNormalizationService tagNormalizationService;
 
     @Override
@@ -54,14 +53,14 @@ public class AiAnalysisServiceImplement implements AiAnalysisService {
             requests.add(request);
 
             List<AnnotateImageResponse> response = client.batchAnnotateImages(requests).getResponsesList();
-            String jsonArrayList = null;
+            List<String> tags = new ArrayList<>();
             if (!response.isEmpty()) {
                 List<EntityAnnotation> labels = response.get(0).getLabelAnnotationsList();
-                List<String> tags = labels.stream().limit(5).map(EntityAnnotation::getDescription)
+                tags = labels.stream().limit(5).map(EntityAnnotation::getDescription)
                         .collect(Collectors.toList());
-                jsonArrayList = objectMapper.writeValueAsString(tags);
+                tags = tagNormalizationService.extractHeadNouns(tags);
             }
-            return new AiAnalysisResultDto(jsonArrayList);
+            return new AiAnalysisResultDto(tags);
         } catch (Exception e) {
             e.printStackTrace();
             return new AiAnalysisResultDto(null);

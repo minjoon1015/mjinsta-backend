@@ -18,5 +18,10 @@ public class ScheduleServiceImplement implements ScheduleService {
     public void updateUserInterest() {
         interestBatchServiceImplement.collectHashTagInterest();
         interestBatchServiceImplement.collectAiObjectInterest();
+        interestBatchServiceImplement.collectPostViewInterest();
+        interestBatchServiceImplement.collectActiveUsers();
+        interestBatchServiceImplement.collectActiveUsersInterest();
+        interestBatchServiceImplement.collectActiveUsersReadPost();
+        interestBatchServiceImplement.runPostRankingBatch();
     }
 }

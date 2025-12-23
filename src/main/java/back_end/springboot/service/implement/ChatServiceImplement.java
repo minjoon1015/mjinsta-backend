@@ -812,8 +812,6 @@ public class ChatServiceImplement implements ChatService {
                     ResponseDto.badRequest();
                 cp.setIsHidden(true);
                 chatRoomParticipantRepository.save(cp);
-                // simpMessagingTemplate.convertAndSendToUser(id, "/queue/notify",
-                // new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now()));
                 eventPublisher.publishEvent(new NotificationEvent(id, "/queue/notify",
                         new AlarmDto(AlarmType.LEAVE_ROOM, LocalDateTime.now())));
                 redisTemplate.delete(key);
@@ -864,10 +862,6 @@ public class ChatServiceImplement implements ChatService {
 
                     String topic = "/topic/chat." + chatRoomId;
                     // 인자 개수가 똑같을 경우 String에 null을 주입하면 에러 발생함
-                    // simpMessagingTemplate.convertAndSend(topic, new
-                    // ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
-                    // messageEntity.getSenderId(), senderDto.getName(), "",
-                    // messageEntity.getMessage(), messageEntity.getCreateAt()));
                     eventPublisher.publishEvent(new TopicEvent(topic,
                             new ChatMessageDto(MessageType.LEAVE, chatRoomId, messageEntity.getId(),
                                     messageEntity.getSenderId(), senderDto.getName(), "", messageEntity.getMessage(),
