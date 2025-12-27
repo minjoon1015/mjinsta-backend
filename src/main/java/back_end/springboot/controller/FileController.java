@@ -26,24 +26,24 @@ public class FileController {
     @PostMapping("/upload/profile")
     public ResponseEntity<? super UpdateProfileUrlResponseDto> profile(
             @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal String id) {
 
-        String beforeUrl = userService.existProfileImage(userDetails.getUsername());
+        String beforeUrl = userService.existProfileImage(id);
 
         if (beforeUrl != null && !beforeUrl.isEmpty()) {
             fileManager.deleteFile(beforeUrl);
         }
 
         String url = fileManager.uploadFile(file, "profile");
-        return userService.updateProfileImage(userDetails.getUsername(), url);
+        return userService.updateProfileImage(id, url);
     }
 
     @PostMapping("/upload/chat")
     public void message(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("chatRoomId") Integer chatRoomId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal String id) {
 
-        chatService.sendFile(files, chatRoomId, userDetails.getUsername());
+        chatService.sendFile(files, chatRoomId, id);
     }
 }
