@@ -1,5 +1,15 @@
 # 🌟 Instagram Clone
 
+## Project URL
+- **URL**: https://mjinsta.pe.kr/
+- **Frontend Repository**: https://github.com/minjoon1015/mjinsta-frontend
+
+<br/>
+
+---
+
+<br/>
+
 ## 🛠 기술 스택
 
 ### Backend
