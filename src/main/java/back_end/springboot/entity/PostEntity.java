@@ -12,6 +12,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -29,7 +31,6 @@ public class PostEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String userId;
     private String comment;
     private String location;
     private Integer favoriteCount;
@@ -53,6 +54,10 @@ public class PostEntity {
         this.commentCount--;
     }
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private UserEntity user;
+
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 100)
     private List<PostAttachmentsEntity> attachments = new ArrayList<>();
@@ -61,8 +66,8 @@ public class PostEntity {
     @BatchSize(size = 100)
     private List<PostFavoriteEntity> favorites = new ArrayList<>();
 
-    public PostEntity(String userId, String comment, String location, Integer favoriteCount, Integer commentCount, LocalDateTime createAt, String profileImage) {
-        this.userId = userId;
+    public PostEntity(UserEntity user, String comment, String location, Integer favoriteCount, Integer commentCount, LocalDateTime createAt, String profileImage) {
+        this.user = user;
         this.comment = comment;
         this.location = location;
         this.favoriteCount = favoriteCount;

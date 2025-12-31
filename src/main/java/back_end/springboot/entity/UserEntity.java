@@ -49,6 +49,10 @@ public class UserEntity {
     @BatchSize(size = 100)
     private List<PostCommentEntity> comments;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10)
+    private List<PostEntity> posts;
+ 
     public UserEntity(String id, String password, String name, String sex, String comment, String email, String address, String addressDetail, String profileImage, UserType type, String socialId) {
         this.id = id;
         this.password = password;

@@ -19,6 +19,7 @@ import back_end.springboot.component.RedisKeyManager;
 import back_end.springboot.dto.object.post.PostDto;
 import back_end.springboot.dto.object.post.PostImageTagsDto;
 import back_end.springboot.dto.object.post.PostTagsDto;
+import back_end.springboot.dto.object.user.SimpleUserDto;
 import back_end.springboot.dto.response.ResponseDto;
 import back_end.springboot.dto.response.feed.GetFeedResponseDto;
 import back_end.springboot.entity.PostAttachmentsEntity;
@@ -111,7 +112,9 @@ public class FeedServiceImplement implements FeedService {
             if (postId == null || favoriteCount == null) {
                 saved = postRepository.findPopularPostsFallback(userId, 30);        
             }
-            saved = postRepository.findPopularPostsFallbackCursor(userId, postId, favoriteCount, 30);
+            else {
+                saved = postRepository.findPopularPostsFallbackCursor(userId, postId, favoriteCount, 30);
+            }
             for (PostEntity p : saved) {
                 PostDto postDto = parsePostDto(p);
                 if (postDto != null) {
@@ -126,7 +129,8 @@ public class FeedServiceImplement implements FeedService {
     }
 
     public PostDto parsePostDto(PostEntity s) {
-        PostDto postDto = new PostDto(s.getId(), s.getUserId(), s.getComment(), s.getLocation(),
+        SimpleUserDto user = new SimpleUserDto(s.getUser().getId(), s.getUser().getName(), s.getUser().getProfileImage(), false);
+        PostDto postDto = new PostDto(s.getId(), user, s.getComment(), s.getLocation(),
                 s.getFavoriteCount(), s.getCommentCount(), s.getCreateAt(), null, null);
         try {
             List<PostAttachmentsEntity> postAttachmentsEntities = s.getAttachments();
@@ -143,7 +147,7 @@ public class FeedServiceImplement implements FeedService {
             }
             postDto.setImageTags(imageTags);
             postDto.setIsLiked(
-                    postFavoriteRepository.findByPostIdAndUserId(s.getId(), s.getUserId()) != null ? true : false);
+                    postFavoriteRepository.findByPostIdAndUserId(s.getId(), s.getUser().getId()) != null ? true : false);
             return postDto;
         } catch (Exception e) {
             e.printStackTrace();

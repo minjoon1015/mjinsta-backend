@@ -108,8 +108,9 @@ public class PostServiceImplement implements PostService {
                 e.printStackTrace();
                 return ResponseDto.badRequest();
             }
+            UserEntity userEntity = userRepository.findById(userId).orElseGet(null);
             PostEntity savePostEntity = postRepository.save(
-                    new PostEntity(userId, metaData.getComment(), metaData.getLocation(), 0, 0, LocalDateTime.now(),
+                    new PostEntity(userEntity, metaData.getComment(), metaData.getLocation(), 0, 0, LocalDateTime.now(),
                             null));
             LinkedHashMap<String, List<PostTagsDto>> tagsList = metaData.getTags();
             List<String> hashtags = metaData.getHashtags();
@@ -214,7 +215,8 @@ public class PostServiceImplement implements PostService {
             if (existed == false)
                 return ResponseDto.badRequest();
             PostEntity postEntity = postRepository.findByPostIdDetailsInfo(postId);
-            PostDto postDto = new PostDto(postEntity.getId(), postEntity.getUserId(), postEntity.getComment(),
+            SimpleUserDto user = new SimpleUserDto(postEntity.getUser().getId(), postEntity.getUser().getName(), postEntity.getUser().getProfileImage(), false);
+            PostDto postDto = new PostDto(postEntity.getId(), user, postEntity.getComment(),
                     postEntity.getLocation(), postEntity.getFavoriteCount(), postEntity.getCommentCount(),
                     postEntity.getCreateAt(), null, false);
             List<PostAttachmentsEntity> postAttachmentsEntities = postEntity.getAttachments();
@@ -260,11 +262,11 @@ public class PostServiceImplement implements PostService {
                         .save(new PostFavoriteEntity(savedPostEntity, userId, createAt));
                 savedPostEntity.increaseLike();
                 postRepository.save(savedPostEntity);
-                if (!senderEntity.getId().equals(savedPostEntity.getUserId())) {
-                    alarmRepository.save(new AlarmEntity(savedPostEntity.getUserId(), AlarmType.POST_LIKE_RECEIVE,
+                if (!senderEntity.getId().equals(savedPostEntity.getUser().getId())) {
+                    alarmRepository.save(new AlarmEntity(savedPostEntity.getUser().getId(), AlarmType.POST_LIKE_RECEIVE,
                             Integer.toString(save.getId())));
                     eventPublisher
-                            .publishEvent(new NotificationEvent(savedPostEntity.getUserId(), "/queue/notify",
+                            .publishEvent(new NotificationEvent(savedPostEntity.getUser().getId(), "/queue/notify",
                                     new PostLikeAlarmDto(AlarmType.POST_LIKE_RECEIVE, createAt, savedPostEntity.getId(),
                                             new SimpleUserDto(senderEntity.getId(), senderEntity.getName(),
                                                     senderEntity.getProfileImage(), false))));
@@ -274,7 +276,7 @@ public class PostServiceImplement implements PostService {
                 postFavoriteRepository.delete(favoriteEntity);
                 savedPostEntity.decreaseLike();
                 postRepository.save(savedPostEntity);
-                AlarmEntity alarmEntity = alarmRepository.findByUserIdAndReferenceId(savedPostEntity.getUserId(),
+                AlarmEntity alarmEntity = alarmRepository.findByUserIdAndReferenceId(savedPostEntity.getUser().getId(),
                         Integer.toString(favoriteEntity.getId()), AlarmType.POST_LIKE_RECEIVE);
                 if (alarmEntity != null) {
                     alarmRepository.delete(alarmEntity);
@@ -302,12 +304,12 @@ public class PostServiceImplement implements PostService {
                     postCommentEntity.getContent(), postCommentEntity.getCreateAt(), userEntity);
             savedPost.increaseComment();
             postRepository.save(savedPost);
-            if (!requestDto.getUserId().equals(savedPost.getUserId())) {
+            if (!requestDto.getUserId().equals(savedPost.getUser().getId())) {
                 alarmRepository.save(
-                        new AlarmEntity(savedPost.getUserId(), AlarmType.POST_COMMENT_RECEIVE,
+                        new AlarmEntity(savedPost.getUser().getId(), AlarmType.POST_COMMENT_RECEIVE,
                                 Integer.toString(postCommentEntity.getId())));
                 eventPublisher.publishEvent(
-                        new NotificationEvent(savedPost.getUserId(), "/queue/notify", new PostCommentAlarmDto(
+                        new NotificationEvent(savedPost.getUser().getId(), "/queue/notify", new PostCommentAlarmDto(
                                 AlarmType.POST_COMMENT_RECEIVE, postCommentDto.getCreateAt(), postCommentDto)));
             }
             return PostCommentResponseDto.success(postCommentDto);
@@ -324,11 +326,12 @@ public class PostServiceImplement implements PostService {
             Integer commentId) {
         try {
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-            String key = "post:comment:pagination-list:" + postId + ":user:" + userId + ":comment:" + commentId;
+            String key = "post:comment:top-list:" + postId + ":user:" + userId;
             Object Object = ops.get(key);
             int page = 30;
             Pageable pageable = PageRequest.of(0, page);
             List<PostCommentDto> commentDtos = new ArrayList<>();
+            commentId = commentId == null ? Integer.MAX_VALUE : commentId;
             if (Object != null) {
                 List<PostCommentDto> cached = objectMapper.convertValue(Object,
                         new TypeReference<List<PostCommentDto>>() {

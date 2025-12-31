@@ -59,9 +59,9 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
                         @Param("readPostIds") List<Integer> readPostIds,
                         @Param("limit") int limit);
 
-        @Query(value = "select * from post where user_id != :userId and (favorite_count <:favoriteCount or (favorite_count = :favoriteCount and id < :postId)) order by id desc, favorite_count desc limit :limit", nativeQuery = true)
+        @Query(value = "select * from post where user_id != :userId and (favorite_count <:favoriteCount or (favorite_count = :favoriteCount and id < :postId)) order by favorite_count desc, id desc limit :limit", nativeQuery = true)
         List<PostEntity> findPopularPostsFallbackCursor(@Param("userId") String userId, @Param("postId") Integer postId, @Param("favoriteCount") Integer favoriteCount, @Param("limit") int limit);
 
-        @Query(value = "select * from post where user_id != :userId order by id desc, favorite_count desc limit :limit", nativeQuery = true)
+        @Query(value = "select * from post where user_id != :userId order by favorite_count desc, id desc limit :limit", nativeQuery = true)
         List<PostEntity> findPopularPostsFallback(@Param("userId") String userId, @Param("limit") int limit);
 }

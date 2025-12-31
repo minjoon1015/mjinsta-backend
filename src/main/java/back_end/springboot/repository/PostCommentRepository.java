@@ -14,9 +14,9 @@ public interface PostCommentRepository extends JpaRepository<PostCommentEntity, 
     @Query("select pc from PostCommentEntity pc where pc.postId = :postId and pc.user.id = :userId order by pc.id DESC")
     List<PostCommentEntity> findByPostIdAndUserIdOrderByCreateAtDesc(Integer postId, String userId, Pageable pageable);
 
-    @Query("select pc from PostCommentEntity pc where pc.postId = :postId and pc.id > :commentId and pc.id NOT IN (:ExclusionIds) order by pc.id DESC")
+    @Query("select pc from PostCommentEntity pc where pc.postId = :postId and pc.id < :commentId and pc.id NOT IN (:ExclusionIds) order by pc.id DESC")
     List<PostCommentEntity> findByPostIdAndIdGreaterThanAndIdNotInOrderByCreateAtDesc(Integer postId, Integer commentId, List<Integer> ExclusionIds, Pageable pageable);   
 
-    @Query("select pc from PostCommentEntity pc where pc.postId = :postId and pc.id > :commentId order by pc.id DESC")
+    @Query("select pc from PostCommentEntity pc where pc.postId = :postId and pc.id < :commentId order by pc.id DESC")
     List<PostCommentEntity> findByPostIdAndIdGreaterThanOrderByCreateAtDesc(Integer postId, Integer commentId, Pageable pageable);
 }

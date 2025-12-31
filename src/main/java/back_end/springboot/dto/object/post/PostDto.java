@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import back_end.springboot.entity.PostEntity;
+import back_end.springboot.dto.object.user.SimpleUserDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +17,7 @@ import lombok.Setter;
 public class PostDto {
     // 팔로우 기능은 게시글에서 지워주는게 나을 듯
     private Integer postId;
-    private String userId;
+    private SimpleUserDto user;
     private String comment;
     private String location;
     private Integer favoriteCount;
