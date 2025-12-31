@@ -1,27 +1,5 @@
 # 🌟 Instagram Clone
 
-<br/>
-
-## 📌 프로젝트 개요
-
-실시간 채팅과 피드 기능을 결합한 소셜 네트워크 서비스입니다.  
-사용자 관심사 기반 맞춤형 피드 추천과 안정적인 실시간 메시징을 제공합니다.
-
-**기간**: 2025.09 ~ 2025.12
-
-<br/>
-
-## Project URL
-- **URL**: https://mjinsta.pe.kr/
-- **Frontend Repository**: https://github.com/minjoon1015/mjinsta-frontend
-
-
-<br/>
-
----
-
-<br/>
-
 ## 🛠 기술 스택
 
 ### Backend
