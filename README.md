@@ -8,6 +8,8 @@
 사용자 관심사 기반 맞춤형 피드 추천과 안정적인 실시간 메시징을 제공합니다.
 
 **기간**: 2025.09 ~ 2025.12
+**URL** : mjinsta.pe.kr
+**Frontend Repository** : https://github.com/minjoon1015/mjinsta-frontend
 
 <br/>
 
