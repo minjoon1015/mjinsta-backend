@@ -6,6 +6,7 @@
 
 <br/>
 
+
 ---
 
 <br/>
@@ -39,26 +40,16 @@
 <br/>
 
 ## 시스템 아키텍처
-
-```
-[Cloudflare Pages] → [Nginx Load Balancer]
-                           ↓
-              [Spring Boot #1] [Spring Boot #2]
-                     ↓                ↓
-              [Redis] [RabbitMQ] [MySQL]
-```
-
-**주요 구성**
-- **Nginx**: 라운드로빈 방식 로드밸런싱
-- **Scale-out**: Spring Boot 2대 운영
-- **Redis**: 세션 관리 및 캐싱
-- **RabbitMQ**: 메시지 영속성 보장
+<img width="1571" height="618" alt="스크린샷 2026-01-14 102851" src="https://github.com/user-attachments/assets/093d7eff-0eb1-4c7d-8006-cd73b771fb70" />
 
 <br/>
+
+## ERD
 
 ---
 
 <br/>
+<img width="1971" height="1718" alt="Untitled" src="https://github.com/user-attachments/assets/6f5f41f6-45ef-4d6f-b64e-9e62535518c4" />
 
 ## 주요 기능
 
