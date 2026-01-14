@@ -3,6 +3,8 @@
 ## Project URL
 - **URL**: https://mjinsta.pe.kr/
 - **Frontend Repository**: https://github.com/minjoon1015/mjinsta-frontend
+- **testId : guest1234**
+- **testPw : guest1234**
 
 <br/>
 
